@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import FilamentsEmbed from "@/components/FilamentsEmbed";
 import { works } from "@/content/works";
 
 const work = works.find((w) => w.id === "filaments")!;
@@ -48,15 +49,7 @@ export default function Page() {
       {/* the interactive piece — embedded self-contained HTML */}
       <section className="mt-20 flex justify-center">
         <figure className="w-full max-w-[1200px]">
-          <div className="window-frame relative w-full aspect-[16/10]">
-            <iframe
-              src="/filaments/filament.html"
-              title="Filaments — flow-field bead chains"
-              className="absolute inset-0 h-full w-full border-0"
-              loading="lazy"
-              allow="fullscreen"
-            />
-          </div>
+          <FilamentsEmbed />
           <figcaption className="mt-5 folio text-cream/45">
             Interactive · drag, scroll, let it run.
           </figcaption>
