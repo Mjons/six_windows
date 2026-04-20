@@ -22,8 +22,8 @@ const PLACEMENT: Record<string, { col: string; align: string }> = {
     col: "md:col-start-1 md:col-end-10",
     align: "md:justify-self-start",
   },
-  "untitled-v": {
-    col: "md:col-start-5 md:col-end-9",
+  "space-station-builder": {
+    col: "md:col-start-5 md:col-end-10",
     align: "md:justify-self-center",
   },
   watchless: {

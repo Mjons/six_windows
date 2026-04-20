@@ -24,6 +24,8 @@ export default function Poster({ treatment }: Props) {
       return <HilmaPoster />;
     case "filaments":
       return <FilamentsPoster />;
+    case "space-station-builder":
+      return <SpaceStationBuilderPoster />;
     case "watchless":
       return <WatchlessPoster />;
     case "neutral-deep":
@@ -203,6 +205,48 @@ function FilamentsPoster() {
           opacity="0.75"
         >
           IV
+        </text>
+      </svg>
+    </>
+  );
+}
+
+function SpaceStationBuilderPoster() {
+  return (
+    <>
+      <Image
+        src="/space_station_builder/space_builder_banner.png"
+        alt=""
+        fill
+        sizes="(min-width: 768px) 500px, 100vw"
+        className="object-cover"
+        unoptimized
+        priority={false}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(130% 95% at 50% 55%, rgba(5,3,8,0) 45%, rgba(5,3,8,0.5) 100%)",
+        }}
+      />
+      <svg
+        viewBox="0 0 400 500"
+        preserveAspectRatio="xMidYMid slice"
+        className="absolute inset-0 h-full w-full pointer-events-none"
+        aria-hidden
+      >
+        <text
+          x="30"
+          y="40"
+          fill={COLORS.gold}
+          fontFamily="var(--font-jetbrains), monospace"
+          fontSize="9"
+          letterSpacing="3"
+          opacity="0.75"
+        >
+          V
         </text>
       </svg>
     </>

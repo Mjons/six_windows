@@ -5,6 +5,7 @@ export type PosterTreatment =
   | "orrery"
   | "hilma"
   | "filaments"
+  | "space-station-builder"
   | "watchless"
   | "neutral-deep"
   | "neutral-cream";
@@ -93,16 +94,20 @@ export const works: Work[] = [
     maxPx: 900,
   },
   {
-    id: "untitled-v",
+    id: "space-station-builder",
     roman: "V",
-    title: "Untitled V",
-    medium: "— · in progress",
-    year: "—",
+    title: "Space Station Builder",
+    medium: "generative · canvas",
+    year: "2025",
     kind: "generative",
-    caption: "Arriving soon. This window is still being framed.",
-    poster: "neutral-deep",
+    caption:
+      "An orbital colony that grows itself — modules accrete across eras, quiet as lichen.",
+    poster: "space-station-builder",
     inset: "center",
-    size: "sm",
+    size: "md",
+    href: "/work/space-station-builder",
+    aspect: "955/395",
+    maxPx: 500,
   },
   {
     id: "watchless",

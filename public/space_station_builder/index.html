@@ -1,0 +1,4656 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orbital Dream - A Living Colony</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        overflow: hidden;
+        cursor: none;
+        background: #0b0e2c;
+      }
+      canvas {
+        display: block;
+      }
+      #ui {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        color: rgba(255, 255, 255, 0.7);
+        font-family: "Segoe UI", sans-serif;
+        font-size: 13px;
+        pointer-events: none;
+      }
+      #era {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255, 255, 255, 0.5);
+        font-family: "Segoe UI", sans-serif;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        pointer-events: none;
+        transition: opacity 0.5s;
+      }
+      #population {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        color: rgba(255, 255, 255, 0.6);
+        font-family: "Segoe UI", sans-serif;
+        font-size: 13px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 1s;
+      }
+      #controls-hint {
+        position: fixed;
+        bottom: 50px;
+        left: 20px;
+        color: rgba(255, 255, 255, 0.35);
+        font-family: "Segoe UI", sans-serif;
+        font-size: 11px;
+        pointer-events: none;
+        transition: opacity 0.5s;
+      }
+      #crew {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        color: rgba(255, 255, 255, 0.6);
+        font-family: "Segoe UI", sans-serif;
+        font-size: 11px;
+        pointer-events: none;
+        text-align: right;
+        line-height: 1.8;
+      }
+      .crew-member {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        opacity: 0.4;
+        transition: opacity 0.3s;
+      }
+      .crew-member.active {
+        opacity: 1;
+      }
+      .crew-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      /* ============ BOOT SCREEN ============ */
+      #boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(
+          ellipse at 50% 60%,
+          #0b0e2c 0%,
+          #05071a 100%
+        );
+        font-family: "Segoe UI", sans-serif;
+        color: rgba(255, 255, 255, 0.85);
+        z-index: 10;
+        cursor: default;
+        transition: opacity 1.2s ease;
+      }
+      #boot.fading {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #boot h1 {
+        font-weight: 200;
+        font-size: 40px;
+        letter-spacing: 8px;
+        margin-bottom: 8px;
+        opacity: 0.9;
+      }
+      #boot .tag {
+        font-weight: 200;
+        font-size: 13px;
+        letter-spacing: 4px;
+        opacity: 0.45;
+        margin-bottom: 48px;
+        text-transform: uppercase;
+      }
+      #boot .mode-choices {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        margin-bottom: 24px;
+      }
+      #boot .mode-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.75);
+        padding: 14px 34px;
+        font-family: inherit;
+        font-size: 15px;
+        letter-spacing: 2px;
+        cursor: pointer;
+        min-width: 320px;
+        text-align: center;
+        transition: all 0.35s ease;
+      }
+      #boot .mode-btn:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+        letter-spacing: 3px;
+      }
+      #boot .mode-btn .sub {
+        display: block;
+        font-size: 11px;
+        opacity: 0.5;
+        letter-spacing: 1px;
+        margin-top: 6px;
+        text-transform: lowercase;
+      }
+      #boot .mode-btn.sep {
+        border-style: dashed;
+        opacity: 0.45;
+      }
+      #boot .back {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.35);
+        font-family: inherit;
+        font-size: 12px;
+        letter-spacing: 2px;
+        cursor: pointer;
+        padding: 8px 12px;
+      }
+      #boot .back:hover {
+        color: rgba(255, 255, 255, 0.8);
+      }
+      #boot .screen {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        animation: fadeIn 0.6s ease;
+      }
+      #boot .screen.active {
+        display: flex;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ------ Conservatory decision prompts ------ */
+      .prompt {
+        margin-bottom: 28px;
+        text-align: center;
+        max-width: 620px;
+      }
+      .prompt .label {
+        font-weight: 200;
+        font-style: italic;
+        font-size: 16px;
+        opacity: 0.55;
+        margin-bottom: 2px;
+      }
+      .prompt .hint {
+        font-weight: 200;
+        font-size: 11px;
+        letter-spacing: 2px;
+        opacity: 0.3;
+        margin-bottom: 14px;
+        text-transform: uppercase;
+      }
+      .prompt .options {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .prompt .opt {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.65);
+        padding: 8px 20px;
+        font-family: inherit;
+        font-size: 13px;
+        letter-spacing: 1.5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 88px;
+      }
+      .prompt .opt:hover {
+        border-color: rgba(255, 255, 255, 0.4);
+        color: #fff;
+      }
+      .prompt .opt.selected {
+        border-color: rgba(255, 255, 255, 0.75);
+        color: #fff;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      #sig-canvas {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.25);
+        cursor: crosshair;
+        border-radius: 2px;
+      }
+      #begin-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #fff;
+        padding: 14px 44px;
+        font-family: inherit;
+        font-size: 14px;
+        letter-spacing: 4px;
+        cursor: pointer;
+        margin-top: 14px;
+        transition: all 0.4s ease;
+      }
+      #begin-btn:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.12);
+        letter-spacing: 6px;
+      }
+      #begin-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      /* Tiny in-run hour dial */
+      #hour-dial {
+        position: fixed;
+        top: 20px;
+        right: 220px;
+        width: 20px;
+        height: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.5);
+        font-family: "Segoe UI", sans-serif;
+        font-size: 10px;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+      }
+      #hour-dial.visible {
+        display: flex;
+      }
+      #hour-dial:hover {
+        border-color: rgba(255, 255, 255, 0.7);
+        color: #fff;
+      }
+      #hour-dial .label {
+        position: absolute;
+        right: 28px;
+        white-space: nowrap;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+      #hour-dial:hover .label {
+        opacity: 0.8;
+      }
+
+      /* Run ID badge — Phase 2 Purpose MVP */
+      #run-id {
+        position: fixed;
+        left: 20px;
+        bottom: 80px;
+        font-family: "Segoe UI", sans-serif;
+        font-size: 9px;
+        letter-spacing: 2px;
+        color: rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition:
+          color 0.4s ease,
+          transform 0.4s ease;
+        user-select: none;
+        pointer-events: auto;
+        display: none;
+      }
+      #run-id.visible {
+        display: block;
+      }
+      #run-id:hover {
+        color: rgba(255, 255, 255, 0.6);
+      }
+      #run-id.copied {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      /* Canvas-edge breath — flashes on keep-tile and first-time marks */
+      #edge-breath {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 5;
+      }
+      #edge-breath.flash {
+        opacity: 1;
+      }
+
+      /* Boot gallery */
+      #boot-gallery {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 24px;
+        max-width: 640px;
+        min-height: 56px;
+      }
+      #boot-gallery .keep {
+        width: 80px;
+        height: 50px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        cursor: pointer;
+        background-size: cover;
+        background-position: center;
+        transition:
+          border-color 0.3s ease,
+          transform 0.3s ease;
+        opacity: 0.7;
+      }
+      #boot-gallery .keep:hover {
+        border-color: rgba(255, 255, 255, 0.55);
+        opacity: 1;
+        transform: translateY(-2px);
+      }
+      #boot-gallery-label {
+        font-weight: 200;
+        font-size: 11px;
+        letter-spacing: 3px;
+        opacity: 0.35;
+        margin-top: 20px;
+        text-transform: uppercase;
+        display: none;
+      }
+      #boot-gallery-label.visible {
+        display: block;
+      }
+
+      /* Score mute toggle */
+      #score-toggle {
+        position: fixed;
+        top: 20px;
+        right: 260px;
+        width: 20px;
+        height: 20px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.4);
+        font-family: "Segoe UI", sans-serif;
+        font-size: 14px;
+        transition: color 0.3s;
+        user-select: none;
+        z-index: 6;
+      }
+      #score-toggle.visible {
+        display: flex;
+      }
+      #score-toggle:hover {
+        color: rgba(255, 255, 255, 0.9);
+      }
+      #score-toggle.muted {
+        color: rgba(255, 255, 255, 0.15);
+      }
+
+      /* ~ overlay — keeper log + first-time glyphs */
+      #keeper-log {
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 7, 26, 0.7);
+        backdrop-filter: blur(3px);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.6);
+        font-family: "Segoe UI", sans-serif;
+        z-index: 9;
+        cursor: default;
+        transition: opacity 0.5s ease;
+        opacity: 0;
+        pointer-events: none;
+      }
+      #keeper-log.visible {
+        display: flex;
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #keeper-log .glyphs {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 32px;
+      }
+      #keeper-log .glyph {
+        font-size: 18px;
+        opacity: 0.15;
+        letter-spacing: 0;
+        transition: opacity 0.4s;
+      }
+      #keeper-log .glyph.lit {
+        opacity: 0.9;
+      }
+      #keeper-log .log-lines {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 28px;
+        text-align: center;
+      }
+      #keeper-log .log-lines .line {
+        font-size: 12px;
+        letter-spacing: 1px;
+        opacity: 0.55;
+      }
+      #keeper-log .export-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: rgba(255, 255, 255, 0.55);
+        padding: 8px 18px;
+        font-family: inherit;
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      #keeper-log .export-btn:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <div id="era">The Beginning</div>
+    <div id="crew"></div>
+    <div id="ui"></div>
+    <div id="population"></div>
+    <div id="controls-hint">
+      Scroll to zoom | Drag to pan | Click astronaut to follow | Double-click to
+      reset
+    </div>
+
+    <div id="hour-dial" title="Hour">
+      <span id="hour-glyph">~</span><span class="label" id="hour-label"></span>
+    </div>
+
+    <div id="run-id" title="click to copy"></div>
+    <div id="edge-breath"></div>
+    <div id="score-toggle" title="score">&#9834;</div>
+
+    <div id="boot">
+      <!-- Mode selection screen -->
+      <div class="screen active" id="boot-modes">
+        <h1>ORBITAL DREAM</h1>
+        <div class="tag">a slow bloom</div>
+        <div class="mode-choices">
+          <button class="mode-btn" data-mode="watch">
+            WATCH MODE<span class="sub">the original dream</span>
+          </button>
+          <button class="mode-btn" data-mode="conservatory">
+            CONSERVATORY MODE<span class="sub"
+              >a few gestures, a living colony</span
+            >
+          </button>
+          <button
+            class="mode-btn sep"
+            data-mode="return"
+            id="boot-return"
+            style="display: none"
+          >
+            RETURN TO YOUR COLONY<span class="sub">continue the last run</span>
+          </button>
+        </div>
+        <div id="boot-gallery-label">kept moments</div>
+        <div id="boot-gallery"></div>
+      </div>
+
+      <!-- Conservatory decisions screen -->
+      <div class="screen" id="boot-conservatory">
+        <button class="back" id="boot-back">&#8592; BACK</button>
+
+        <div class="prompt">
+          <div class="label">Seed.</div>
+          <div class="hint">
+            choose the first few cells. they decide everything and nothing.
+          </div>
+          <div class="options" id="opt-seed">
+            <button class="opt" data-val="Cradle">Cradle</button>
+            <button class="opt" data-val="Filament">Filament</button>
+          </div>
+        </div>
+
+        <div class="prompt">
+          <div class="label">Question.</div>
+          <div class="hint">this is what your colony is for.</div>
+          <div class="options" id="opt-question">
+            <button class="opt" data-val="Shelter">Shelter</button>
+            <button class="opt" data-val="Study">Study</button>
+            <button class="opt" data-val="Song">Song</button>
+            <button class="opt" data-val="Passage">Passage</button>
+            <button class="opt" data-val="Witness">Witness</button>
+          </div>
+        </div>
+
+        <div class="prompt">
+          <div class="label">Hour.</div>
+          <div class="hint">how fast does time move.</div>
+          <div class="options" id="opt-hour">
+            <button class="opt" data-val="Lichen">Lichen</button>
+            <button class="opt selected" data-val="River">River</button>
+            <button class="opt" data-val="Flame">Flame</button>
+          </div>
+        </div>
+
+        <div class="prompt">
+          <div class="label">Signature.</div>
+          <div class="hint">
+            leave your mark. (draw one small symbol, or skip)
+          </div>
+          <canvas id="sig-canvas" width="420" height="90"></canvas>
+        </div>
+
+        <button id="begin-btn" disabled>BEGIN</button>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const uiEl = document.getElementById("ui");
+      const eraEl = document.getElementById("era");
+      const crewEl = document.getElementById("crew");
+      const popEl = document.getElementById("population");
+
+      let width, height;
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener("resize", resize);
+
+      // Zoom and Pan controls
+      canvas.addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+          userCamera.active = true;
+          userCamera.inactivityTimer = 0;
+          userCamera.lastMotionMs = performance.now();
+
+          // Get mouse position relative to canvas center
+          const rect = canvas.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left - width / 2;
+          const mouseY = e.clientY - rect.top - height / 2;
+
+          // Calculate world position under mouse before zoom
+          const worldXBefore = mouseX / camera.zoom + camera.x;
+          const worldYBefore = mouseY / camera.zoom + camera.y;
+
+          // Adjust zoom
+          const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+          userCamera.zoom = Math.max(
+            userCamera.minZoom,
+            Math.min(userCamera.maxZoom, userCamera.zoom * zoomFactor),
+          );
+
+          // Calculate world position under mouse after zoom
+          const worldXAfter = mouseX / userCamera.zoom + userCamera.x;
+          const worldYAfter = mouseY / userCamera.zoom + userCamera.y;
+
+          // Adjust pan to keep the point under the mouse stationary
+          userCamera.x += worldXBefore - worldXAfter;
+          userCamera.y += worldYBefore - worldYAfter;
+        },
+        { passive: false },
+      );
+
+      let wasDragging = false;
+      let dragStartX = 0,
+        dragStartY = 0;
+
+      canvas.addEventListener("mousedown", (e) => {
+        if (e.button === 0) {
+          // Left click
+          userCamera.isPanning = true;
+          userCamera.active = true;
+          userCamera.inactivityTimer = 0;
+          userCamera.lastMotionMs = performance.now();
+          userCamera.lastMouseX = e.clientX;
+          userCamera.lastMouseY = e.clientY;
+          dragStartX = e.clientX;
+          dragStartY = e.clientY;
+          wasDragging = false;
+          canvas.style.cursor = "grabbing";
+        }
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        if (userCamera.isPanning) {
+          const dx = e.clientX - userCamera.lastMouseX;
+          const dy = e.clientY - userCamera.lastMouseY;
+          userCamera.x -= dx / camera.zoom;
+          userCamera.y -= dy / camera.zoom;
+          userCamera.lastMouseX = e.clientX;
+          userCamera.lastMouseY = e.clientY;
+          userCamera.inactivityTimer = 0;
+          userCamera.lastMotionMs = performance.now();
+
+          // Check if we've moved enough to count as a drag
+          const totalDx = e.clientX - dragStartX;
+          const totalDy = e.clientY - dragStartY;
+          if (totalDx * totalDx + totalDy * totalDy > 25) {
+            wasDragging = true;
+          }
+        }
+      });
+
+      canvas.addEventListener("mouseup", (e) => {
+        if (e.button === 0) {
+          userCamera.isPanning = false;
+          canvas.style.cursor = "none";
+        }
+      });
+
+      canvas.addEventListener("mouseleave", () => {
+        userCamera.isPanning = false;
+        canvas.style.cursor = "none";
+      });
+
+      // Double-click to reset to auto-follow
+      canvas.addEventListener("dblclick", () => {
+        userCamera.active = false;
+        userCamera.followingAstro = null;
+        userCamera.zoom = 1;
+        userCamera.x = camera.x;
+        userCamera.y = camera.y;
+      });
+
+      // Click to follow astronaut — hit-test in *projected screen space* so
+      // the 2.5D rig doesn't break the click-to-follow affordance.
+      canvas.addEventListener("click", (e) => {
+        if (wasDragging) return; // Ignore if was dragging
+
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        const hitRadiusScreen = 25; // screen-space pixels
+        let clickedAstro = null;
+        let bestDist2 = Infinity;
+        for (const a of astronauts) {
+          const p = project(a.x, a.y, a.z || 0);
+          const dx = clickX - p.sx;
+          const dy = clickY - p.sy;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < hitRadiusScreen * hitRadiusScreen && d2 < bestDist2) {
+            bestDist2 = d2;
+            clickedAstro = a;
+          }
+        }
+
+        if (clickedAstro) {
+          // Toggle follow
+          if (userCamera.followingAstro === clickedAstro) {
+            userCamera.followingAstro = null;
+            userCamera.active = false;
+          } else {
+            userCamera.followingAstro = clickedAstro;
+            userCamera.active = true;
+            userCamera.zoom = userCamera.followZoom;
+          }
+        }
+      });
+
+      // Colors
+      const C = {
+        bgSpace: "#0B0E2C",
+        bgNebula: "#1A1B4B",
+        starWhite: "#FFFFFF",
+        starBlue: "#7EB8DA",
+        starPink: "#E8A0BF",
+        starYellow: "#F9D976",
+        earthDay: "#4ECDC4",
+        earthDayDark: "#1A7A72",
+        earthNight: "#1A3A5C",
+        earthNightDark: "#0D1F33",
+        earthAtmo: "#7EE8DE",
+        earthCity: "#FFE066",
+        issBody: "#E8E8E8",
+        issBodyDark: "#B8B8B8",
+        panelBlue: "#2D4A6F",
+        panelFrame: "#FFD93D",
+        window: "#63B3ED",
+        windowLit: "#FBD38D",
+        windowWarm: "#F6AD55",
+        spark: "#FFE066",
+        sparkOrange: "#FF9F43",
+        weldBlue: "#63B3ED",
+        weldWhite: "#FFFFFF",
+        success: "#68D391",
+        warning: "#FF6B6B",
+        construction: "#48BB78",
+        greenhouse: "#68D391",
+        greenhouseGlow: "#9AE6B4",
+        industrial: "#A0AEC0",
+        habRing: "#E8E8E8",
+        radiator: "#CBD5E0",
+        shipBody: "#A0AEC0",
+        shipAccent: "#63B3ED",
+        droneBody: "#718096",
+        exhaust: "#F6AD55",
+        shuttleGlow: "#FEFCBF",
+      };
+
+      // Crew nations
+      const nations = [
+        {
+          id: "usa",
+          name: "NASA",
+          accent: "#FF6B6B",
+          secondary: "#3182CE",
+          suit: "#F0F0F0",
+        },
+        {
+          id: "russia",
+          name: "Roscosmos",
+          accent: "#E53E3E",
+          secondary: "#3182CE",
+          suit: "#F0F0F0",
+        },
+        {
+          id: "esa",
+          name: "ESA",
+          accent: "#3182CE",
+          secondary: "#F6E05E",
+          suit: "#F0F0F0",
+        },
+        {
+          id: "japan",
+          name: "JAXA",
+          accent: "#E53E3E",
+          secondary: "#FFFFFF",
+          suit: "#FFFFFF",
+        },
+        {
+          id: "china",
+          name: "CNSA",
+          accent: "#F6E05E",
+          secondary: "#E53E3E",
+          suit: "#F0F0F0",
+        },
+        {
+          id: "canada",
+          name: "CSA",
+          accent: "#E53E3E",
+          secondary: "#FFFFFF",
+          suit: "#FFFFFF",
+        },
+      ];
+
+      crewEl.innerHTML = nations
+        .map(
+          (n) => `
+            <div class="crew-member" id="crew-${n.id}">
+                <span>${n.name}</span>
+                <div class="crew-dot" style="background: ${n.accent}"></div>
+            </div>
+        `,
+        )
+        .join("");
+
+      // ============ MODE ROUTER ============
+      // 'boot' while on the boot screen; 'watch' is the original zen
+      // experience; 'conservatory' is the doctrine-less living-colony mode.
+      const Mode = {
+        current: "boot",
+        hourMultiplier: 1.0, // scales most dt-driven systems in conservatory
+      };
+
+      // ============ PHASE 0 — SHARED FOUNDATIONS ============
+      // Tiny pub/sub. Single emission point for every future listener.
+      const Events = {
+        listeners: new Map(),
+        on(type, fn) {
+          if (!this.listeners.has(type)) this.listeners.set(type, []);
+          this.listeners.get(type).push(fn);
+        },
+        off(type, fn) {
+          const ls = this.listeners.get(type);
+          if (!ls) return;
+          const i = ls.indexOf(fn);
+          if (i >= 0) ls.splice(i, 1);
+        },
+        emit(type, payload) {
+          const ls = this.listeners.get(type);
+          if (!ls) return;
+          for (const fn of ls) {
+            try {
+              fn(payload);
+            } catch (e) {
+              console.error("Events listener error for", type, e);
+            }
+          }
+        },
+      };
+
+      // Run-identity: deterministic id from decisions + signature polyline.
+      // Full sub-genomes (palette, shape, etc.) land in later Genome-plan phases.
+      const Genome = {
+        version: 1,
+        seed: 0,
+        build(decisions) {
+          this.seed = Genome.hashInputs(decisions || {});
+        },
+        id() {
+          const s = (this.seed >>> 0)
+            .toString(16)
+            .padStart(8, "0")
+            .toUpperCase();
+          return `${s.slice(0, 4)}-${s.slice(4)}`;
+        },
+        hashInputs(d) {
+          let h = 2166136261;
+          const mix = (n) => {
+            h ^= n | 0;
+            h = Math.imul(h, 16777619);
+          };
+          for (const k of ["seed", "question", "hour"]) {
+            const v = d[k] || "";
+            for (let i = 0; i < v.length; i++) mix(v.charCodeAt(i));
+          }
+          const sig = d.signature || [];
+          for (let i = 0; i < sig.length; i++) {
+            mix(Math.floor(sig[i][0] * 1000));
+            mix(Math.floor(sig[i][1] * 1000));
+          }
+          return h >>> 0;
+        },
+      };
+
+      // Geometric eclipse detector. Emits exactly one start + one end per eclipse.
+      const EclipseDetector = {
+        active: false,
+        lastEmitMs: 0,
+        tick() {
+          // Station hovers near world origin. Earth sweeps below; sun is on
+          // the opposite side of the orbit. "Eclipsed" = station's sun-side
+          // angle is nearly opposite the Earth's direction.
+          const a = orbit.angle;
+          // drawEarth() uses sin(a) for Earth's horizontal drift; the station
+          // is eclipsed roughly when cos(2a) approaches -1 (sun behind Earth).
+          const eclipsed = Math.cos(orbit.angle * 2) < -0.9;
+          if (eclipsed && !this.active) {
+            this.active = true;
+            this.lastEmitMs = performance.now();
+            Events.emit("orbit:eclipse-start", { at: this.lastEmitMs });
+          } else if (!eclipsed && this.active) {
+            this.active = false;
+            this.lastEmitMs = performance.now();
+            Events.emit("orbit:eclipse-end", { at: this.lastEmitMs });
+          }
+        },
+      };
+
+      // Attention tracker: tab focus + camera quiet. Emits sustained / broken.
+      const Attention = {
+        tabFocused: !document.hidden,
+        cameraStillSince: 0,
+        sustainedMs: 0,
+        wasSustained: false,
+        totalFocusedMs: 0,
+        tick(dt) {
+          if (!this.tabFocused) {
+            this.cameraStillSince = 0;
+            this.sustainedMs = 0;
+            if (this.wasSustained) {
+              this.wasSustained = false;
+              Events.emit("attention:broken", { at: performance.now() });
+            }
+            return;
+          }
+          this.totalFocusedMs += dt;
+          const now = performance.now();
+          const cameraQuiet = now - (userCamera.lastMotionMs || 0) > 1200;
+          if (cameraQuiet) this.cameraStillSince += dt;
+          else this.cameraStillSince = 0;
+          this.sustainedMs = this.cameraStillSince;
+          if (this.sustainedMs > 5000 && !this.wasSustained) {
+            this.wasSustained = true;
+            Events.emit("attention:sustained", { since: now });
+          } else if (this.sustainedMs < 1000 && this.wasSustained) {
+            this.wasSustained = false;
+            Events.emit("attention:broken", { at: now });
+          }
+        },
+      };
+      document.addEventListener("visibilitychange", () => {
+        Attention.tabFocused = !document.hidden;
+      });
+
+      // Keeper — localStorage record of first-times, keeps, memorials, lineage.
+      const Keeper = {
+        VERSION: 1,
+        KEY: "orbital-dream.keeper.v1",
+        record: null,
+        init() {
+          try {
+            const raw = localStorage.getItem(this.KEY);
+            if (raw) this.record = JSON.parse(raw);
+          } catch (_) {
+            this.record = null;
+          }
+          if (!this.record || this.record.version !== this.VERSION) {
+            this.record = {
+              version: this.VERSION,
+              createdAt: Date.now(),
+              totalRunCount: 0,
+              totalFocusedMs: 0,
+              firstTimes: {},
+              keeps: [],
+              memorialStars: [],
+              lastRunFinalSnapshot: null,
+              lastSeenMs: Date.now(),
+            };
+            this.save();
+          }
+          Events.on("run:start", () => {
+            this.record.totalRunCount++;
+            this.record.lastSeenMs = Date.now();
+            this.save();
+          });
+        },
+        mark(key) {
+          if (!this.record.firstTimes[key]) {
+            this.record.firstTimes[key] = Date.now();
+            this.save();
+            return true;
+          }
+          return false;
+        },
+        save() {
+          try {
+            localStorage.setItem(this.KEY, JSON.stringify(this.record));
+          } catch (_) {
+            // Quota — drop oldest keep and retry once.
+            if (this.record.keeps.length > 0) {
+              this.record.keeps.shift();
+              try {
+                localStorage.setItem(this.KEY, JSON.stringify(this.record));
+              } catch (__) {}
+            }
+          }
+        },
+      };
+
+      // project(wx, wy, wz) — weak-perspective projection used by every
+      // renderable that participates in 2.5D (station modules, astronauts,
+      // conduits, Earth). Returns screen-space center + uniform scale +
+      // depth for painter sort and future aerial haze.
+      //
+      // Sequence: translate relative to camera → rotate yaw (around Y) →
+      // rotate pitch (around X) → weak-perspective divide → zoom + fov.
+      function project(wx, wy, wz) {
+        wz = wz || 0;
+        let dx = wx - camera.x;
+        let dy = wy - camera.y;
+        let dz = wz - (camera.z || 0);
+        // yaw around Y axis (swings left/right in world XZ plane)
+        if (camera.yaw) {
+          const cy = Math.cos(camera.yaw),
+            sy = Math.sin(camera.yaw);
+          const nx = dx * cy - dz * sy;
+          const nz = dx * sy + dz * cy;
+          dx = nx;
+          dz = nz;
+        }
+        // pitch around X (tilts up/down in world YZ plane)
+        if (camera.pitch) {
+          const cp = Math.cos(camera.pitch),
+            sp = Math.sin(camera.pitch);
+          const ny = dy * cp - dz * sp;
+          const nz = dy * sp + dz * cp;
+          dy = ny;
+          dz = nz;
+        }
+        // Weak perspective: stable, doesn't explode near z=0.
+        const persp = 1 / (1 + Math.max(-0.9, dz / 800));
+        const scale = persp * camera.zoom * (camera.fov || 1);
+        return {
+          sx: dx * scale + width / 2,
+          sy: dy * scale + height / 2,
+          scale,
+          depth: dz,
+        };
+      }
+
+      // Assigns a z to a module given type and intended placement. Called at
+      // the moment of `station.modules.push(mod)`. Keeps the plane mostly
+      // flat; only a few categories break out for visible depth.
+      function moduleZ(mod) {
+        const cat = mod.ti?.cat;
+        const id = mod.id || 0;
+        if (cat === "solar") return 6;
+        if (cat === "radiator") return -6;
+        if (cat === "truss") return id % 2 === 0 ? 4 : -4;
+        if (cat === "ring") {
+          // Ring segments follow their angular position.
+          // Approximate radius from their world position and use cos(angle)
+          // to give rings real thickness under yaw.
+          const a = Math.atan2(mod.y, mod.x);
+          const r = Math.hypot(mod.x, mod.y);
+          return Math.cos(a) * Math.min(16, r * 0.04);
+        }
+        if (cat === "spoke") return id % 2 === 0 ? 3 : -3;
+        return 0;
+      }
+
+      // Director-camera slot (Phase 1 now actively writes).
+      const dirCamera = {
+        active: false,
+        x: 0,
+        y: 0,
+        z: 0,
+        zoom: 1,
+        yaw: 0,
+        pitch: 0,
+        roll: 0,
+        fov: 1.0,
+      };
+
+      // ============ PHASE 1 — CINEMATOGRAPHER DIRECTOR ============
+      // State machine picks shots. Phase 1 ships with one shot: `orbit`.
+      // Per-shot definitions — each provides enter/hold/exit functions that
+      // write directly into `dirCamera`. Data-driven: adding a shot is a
+      // single object; no extra state-machine code.
+      const ShotCatalog = {
+        orbit: {
+          name: "orbit",
+          holdMs: 14000,
+          enter(s, t) {
+            const e = easeInOut(t);
+            dirCamera.pitch = lerp(s.fromPitch, 0.14, e);
+            dirCamera.yaw = lerp(s.fromYaw, 0, e);
+            dirCamera.fov = lerp(s.fromFov, 1.0, e);
+            dirCamera.x = lerp(s.fromX, s.autoX, e);
+            dirCamera.y = lerp(s.fromY, s.autoY, e);
+            dirCamera.zoom = lerp(s.fromZoom, s.autoZoom, e);
+          },
+          hold(s, elapsed) {
+            const w = (Math.PI * 2) / this.holdMs;
+            dirCamera.yaw = Math.sin(elapsed * w) * 0.3;
+            dirCamera.pitch = 0.14;
+            dirCamera.x = s.autoX;
+            dirCamera.y = s.autoY;
+            dirCamera.zoom = s.autoZoom;
+          },
+          exit(s, t) {
+            const e = easeInOut(t);
+            dirCamera.yaw = lerp(s.atYaw, 0, e);
+            dirCamera.pitch = lerp(s.atPitch, 0, e);
+            dirCamera.fov = lerp(s.atFov, 1.0, e);
+          },
+        },
+
+        crane: {
+          name: "crane",
+          holdMs: 10000,
+          enter(s, t) {
+            const e = easeInOut(t);
+            dirCamera.yaw = lerp(s.fromYaw, 0, e);
+            dirCamera.pitch = lerp(s.fromPitch, 0, e);
+            dirCamera.fov = lerp(s.fromFov, 1.0, e);
+            dirCamera.x = lerp(s.fromX, s.autoX, e);
+            dirCamera.y = lerp(s.fromY, s.autoY, e);
+            dirCamera.zoom = lerp(s.fromZoom, s.autoZoom * 0.85, e);
+          },
+          hold(s, elapsed) {
+            const t = elapsed / this.holdMs;
+            // Pitch crane from 0 → 0.55 across the hold, easing in/out.
+            dirCamera.pitch = 0.55 * easeInOut(t);
+            dirCamera.zoom = s.autoZoom * (0.85 - 0.02 * easeInOut(t));
+            dirCamera.yaw = Math.sin(elapsed * 0.00015) * 0.08;
+          },
+          exit(s, t) {
+            const e = easeInOut(t);
+            dirCamera.pitch = lerp(s.atPitch, 0, e);
+            dirCamera.yaw = lerp(s.atYaw, 0, e);
+          },
+        },
+
+        dollyPush: {
+          name: "dollyPush",
+          holdMs: 6000,
+          enter(s, t) {
+            const e = easeInOut(t);
+            const tx = s.payload?.module?.x ?? s.autoX;
+            const ty = s.payload?.module?.y ?? s.autoY;
+            dirCamera.x = lerp(s.fromX, tx * 0.5 + s.autoX * 0.5, e);
+            dirCamera.y = lerp(s.fromY, ty * 0.5 + s.autoY * 0.5, e);
+            dirCamera.zoom = lerp(s.fromZoom, s.autoZoom, e);
+            dirCamera.yaw = lerp(s.fromYaw, 0, e);
+            dirCamera.pitch = lerp(s.fromPitch, 0.06, e);
+            dirCamera.fov = lerp(s.fromFov, 0.95, e);
+          },
+          hold(s, elapsed) {
+            const t = Math.min(1, elapsed / this.holdMs);
+            const tx = s.payload?.module?.x ?? s.autoX;
+            const ty = s.payload?.module?.y ?? s.autoY;
+            // Dolly in: translate toward subject, zoom holds.
+            dirCamera.x = lerp(s.autoX, tx, easeInOut(t) * 0.8);
+            dirCamera.y = lerp(s.autoY, ty, easeInOut(t) * 0.8);
+            dirCamera.zoom = s.autoZoom * (1 + 0.15 * easeInOut(t));
+          },
+          exit(s, t) {
+            const e = easeInOut(t);
+            dirCamera.yaw = lerp(s.atYaw, 0, e);
+            dirCamera.pitch = lerp(s.atPitch, 0, e);
+            dirCamera.fov = lerp(s.atFov, 1.0, e);
+            dirCamera.x = lerp(s.atX, s.autoX, e);
+            dirCamera.y = lerp(s.atY, s.autoY, e);
+            dirCamera.zoom = lerp(s.atZoom, s.autoZoom, e);
+          },
+        },
+
+        earthRise: {
+          name: "earthRise",
+          holdMs: 14000,
+          enter(s, t) {
+            const e = easeInOut(t);
+            dirCamera.pitch = lerp(s.fromPitch, 0.4, e);
+            dirCamera.yaw = lerp(s.fromYaw, 0, e);
+            dirCamera.fov = lerp(s.fromFov, 1.05, e);
+            dirCamera.x = lerp(s.fromX, s.autoX, e);
+            dirCamera.y = lerp(s.fromY, s.autoY, e);
+            dirCamera.zoom = lerp(s.fromZoom, s.autoZoom * 0.9, e);
+          },
+          hold(s, elapsed) {
+            const t = Math.min(1, elapsed / this.holdMs);
+            // Pitch eases from 0.4 → -0.15 (look up past the station).
+            dirCamera.pitch = lerp(0.4, -0.15, easeInOut(t));
+            dirCamera.yaw = Math.sin(elapsed * 0.0001) * 0.04;
+          },
+          exit(s, t) {
+            const e = easeInOut(t);
+            dirCamera.pitch = lerp(s.atPitch, 0, e);
+            dirCamera.fov = lerp(s.atFov, 1.0, e);
+            dirCamera.zoom = lerp(s.atZoom, s.autoZoom, e);
+          },
+        },
+
+        terminatorSlide: {
+          name: "terminatorSlide",
+          holdMs: 14000,
+          enter(s, t) {
+            const e = easeInOut(t);
+            dirCamera.pitch = lerp(s.fromPitch, 0.05, e);
+            dirCamera.yaw = lerp(s.fromYaw, -0.22, e);
+            dirCamera.fov = lerp(s.fromFov, 0.9, e);
+            dirCamera.x = lerp(s.fromX, s.autoX, e);
+            dirCamera.y = lerp(s.fromY, s.autoY, e);
+            dirCamera.zoom = lerp(s.fromZoom, s.autoZoom * 1.1, e);
+          },
+          hold(s, elapsed) {
+            const t = Math.min(1, elapsed / this.holdMs);
+            // Slowly pan yaw across to reveal the whole face.
+            dirCamera.yaw = lerp(-0.22, 0.22, easeInOut(t));
+            dirCamera.pitch = 0.05;
+          },
+          exit(s, t) {
+            const e = easeInOut(t);
+            dirCamera.yaw = lerp(s.atYaw, 0, e);
+            dirCamera.pitch = lerp(s.atPitch, 0, e);
+            dirCamera.fov = lerp(s.atFov, 1.0, e);
+            dirCamera.zoom = lerp(s.atZoom, s.autoZoom, e);
+          },
+        },
+
+        parallaxStall: {
+          name: "parallaxStall",
+          holdMs: 12000,
+          enter(s, t) {
+            const e = easeInOut(t);
+            dirCamera.pitch = lerp(s.fromPitch, 0.04, e);
+            dirCamera.yaw = lerp(s.fromYaw, 0, e);
+            dirCamera.fov = lerp(s.fromFov, 1.0, e);
+            dirCamera.x = lerp(s.fromX, s.autoX, e);
+            dirCamera.y = lerp(s.fromY, s.autoY, e);
+            dirCamera.zoom = lerp(s.fromZoom, s.autoZoom, e);
+          },
+          hold(s, elapsed) {
+            // Tiny yaw oscillation — station barely moves, stars swim.
+            dirCamera.yaw = Math.sin(elapsed * 0.00035) * 0.053; // ~3°
+            dirCamera.pitch = 0.04;
+          },
+          exit(s, t) {
+            const e = easeInOut(t);
+            dirCamera.yaw = lerp(s.atYaw, 0, e);
+            dirCamera.pitch = lerp(s.atPitch, 0, e);
+          },
+        },
+      };
+
+      function easeInOut(t) {
+        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      }
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      const Director = {
+        state: "IDLE",
+        shot: null,
+        shotElapsed: 0,
+        cooldownMs: 0,
+        enterMs: 1500,
+        exitMs: 1500,
+        s: null, // per-shot scratch (from/to, auto targets, payload, marks)
+        recent: [], // last 3 shot names for anti-repeat
+        eventQueue: [], // { shotName, payload, at }
+        lastEventShotAt: 0,
+
+        init() {
+          Events.on("module:built", (p) => this.queueEventShot("dollyPush", p));
+          Events.on("era:advance", (p) => this.queueEventShot("crane", p));
+          Events.on("module:break", (p) => this.queueEventShot("dollyPush", p));
+          Events.on("orbit:eclipse-start", (p) =>
+            this.queueEventShot("terminatorSlide", p),
+          );
+        },
+
+        queueEventShot(shotName, payload) {
+          this.eventQueue.push({
+            shotName,
+            payload,
+            at: performance.now(),
+          });
+          // Keep queue small — staleness dropped on dequeue.
+          if (this.eventQueue.length > 6) this.eventQueue.shift();
+        },
+
+        tick(dt) {
+          if (Mode.current === "boot") return;
+          if (userCamera.active || userCamera.followingAstro) {
+            if (this.state !== "IDLE") {
+              this.state = "IDLE";
+              dirCamera.active = false;
+            }
+            return;
+          }
+          switch (this.state) {
+            case "IDLE":
+              this.cooldownMs -= dt;
+              if (this.cooldownMs <= 0) this.choose();
+              break;
+            case "ENTER":
+              this.shotElapsed += dt;
+              this.shot.enter(
+                this.s,
+                Math.min(1, this.shotElapsed / this.enterMs),
+              );
+              if (this.shotElapsed >= this.enterMs) {
+                this.state = "HOLD";
+                this.shotElapsed = 0;
+              }
+              break;
+            case "HOLD":
+              this.shotElapsed += dt;
+              this.shot.hold(this.s, this.shotElapsed);
+              if (this.shotElapsed >= this.shot.holdMs) {
+                this.s.atYaw = dirCamera.yaw;
+                this.s.atPitch = dirCamera.pitch;
+                this.s.atFov = dirCamera.fov;
+                this.s.atX = dirCamera.x;
+                this.s.atY = dirCamera.y;
+                this.s.atZoom = dirCamera.zoom;
+                this.state = "EXIT";
+                this.shotElapsed = 0;
+              }
+              break;
+            case "EXIT":
+              this.shotElapsed += dt;
+              this.shot.exit(
+                this.s,
+                Math.min(1, this.shotElapsed / this.exitMs),
+              );
+              if (this.shotElapsed >= this.exitMs) {
+                this.state = "COOLDOWN";
+                // Cooldown base; doubled when attention is high (Phase 5).
+                const baseCd = 2500 + Math.random() * 2500;
+                this.cooldownMs =
+                  Attention.sustainedMs > 30000 ? baseCd * 2 : baseCd;
+                dirCamera.active = false;
+              }
+              break;
+            case "COOLDOWN":
+              this.cooldownMs -= dt;
+              if (this.cooldownMs <= 0) this.state = "IDLE";
+              break;
+          }
+        },
+
+        choose() {
+          // 1. Drain stale events.
+          const now = performance.now();
+          while (this.eventQueue.length && now - this.eventQueue[0].at > 4000) {
+            this.eventQueue.shift();
+          }
+          // 2. Pick event shot if we have one and the rate limit allows.
+          let chosenName = null;
+          let chosenPayload = null;
+          if (
+            this.eventQueue.length > 0 &&
+            now - this.lastEventShotAt > 30000
+          ) {
+            const ev = this.eventQueue.shift();
+            chosenName = ev.shotName;
+            chosenPayload = ev.payload;
+            this.lastEventShotAt = now;
+          }
+          // 3. Conditional weighted rotation.
+          if (!chosenName) {
+            const pool = this.candidatePool();
+            chosenName = this.pickFromPool(pool);
+            chosenPayload = null;
+          }
+          this.startShot(chosenName, chosenPayload);
+        },
+
+        candidatePool() {
+          const pool = [
+            { name: "orbit", w: 1.2 },
+            { name: "parallaxStall", w: 0.8 },
+            { name: "crane", w: 0.9 },
+            { name: "earthRise", w: dayNight < 0.2 ? 1.5 : 0.2 },
+            {
+              name: "terminatorSlide",
+              w: dayNight > 0.35 && dayNight < 0.65 ? 1.2 : 0.2,
+            },
+          ];
+          // Anti-repeat: block anything in recent window.
+          return pool.filter((p) => !this.recent.includes(p.name));
+        },
+
+        pickFromPool(pool) {
+          if (!pool.length) return "orbit";
+          const total = pool.reduce((s, p) => s + p.w, 0);
+          let r = Math.random() * total;
+          for (const p of pool) {
+            r -= p.w;
+            if (r <= 0) return p.name;
+          }
+          return pool[0].name;
+        },
+
+        startShot(name, payload) {
+          const shot = ShotCatalog[name];
+          if (!shot) {
+            this.state = "COOLDOWN";
+            this.cooldownMs = 1500;
+            return;
+          }
+          this.shot = shot;
+          this.state = "ENTER";
+          this.shotElapsed = 0;
+          dirCamera.active = true;
+          // Compute auto-fit anchor so subject-less shots still center on station.
+          let minX = 0,
+            maxX = 0,
+            minY = 0,
+            maxY = 0;
+          station.modules.forEach((m) => {
+            const ti = modTypes[m.type];
+            if (!ti) return;
+            minX = Math.min(minX, m.x - ti.w);
+            maxX = Math.max(maxX, m.x + ti.w);
+            minY = Math.min(minY, m.y - ti.h);
+            maxY = Math.max(maxY, m.y + ti.h);
+          });
+          const sw = maxX - minX,
+            sh = maxY - minY;
+          const tz = Math.min(
+            1,
+            Math.min(
+              (width * 0.7) / Math.max(sw, 150),
+              (height * 0.6) / Math.max(sh, 150),
+            ),
+          );
+          const autoZoom = Math.max(0.06, Math.min(1, tz));
+          const autoX = (minX + maxX) / 2;
+          const autoY = (minY + maxY) / 2;
+          this.s = {
+            fromYaw: camera.yaw,
+            fromPitch: camera.pitch,
+            fromFov: camera.fov,
+            fromX: camera.x,
+            fromY: camera.y,
+            fromZoom: camera.zoom,
+            autoX,
+            autoY,
+            autoZoom,
+            payload,
+            atYaw: 0,
+            atPitch: 0,
+            atFov: 1.0,
+            atX: autoX,
+            atY: autoY,
+            atZoom: autoZoom,
+          };
+          // Seed dirCamera with current camera to avoid snap.
+          dirCamera.x = camera.x;
+          dirCamera.y = camera.y;
+          dirCamera.zoom = camera.zoom;
+          dirCamera.yaw = camera.yaw;
+          dirCamera.pitch = camera.pitch;
+          dirCamera.fov = camera.fov;
+          // Record recent (cap 3).
+          this.recent.unshift(name);
+          if (this.recent.length > 3) this.recent.pop();
+        },
+      };
+
+      // Globals
+      const orbit = { angle: 0, speed: 0.00003, earthRadius: 480 };
+      const camera = {
+        x: 0,
+        y: 0,
+        zoom: 1,
+        targetZoom: 1,
+        // Phase 1 adds z/yaw/pitch/roll/fov here; defaulted so nothing breaks.
+        z: 0,
+        yaw: 0,
+        pitch: 0,
+        roll: 0,
+        fov: 1.0,
+      };
+      const userCamera = {
+        active: false, // true when user is controlling camera
+        x: 0,
+        y: 0, // user pan offset
+        zoom: 1, // user zoom level
+        minZoom: 0.05,
+        maxZoom: 3,
+        isPanning: false,
+        lastMouseX: 0,
+        lastMouseY: 0,
+        inactivityTimer: 0,
+        inactivityTimeout: 5000, // return to auto after 5s of no interaction
+        followingAstro: null, // astronaut being followed (or null)
+        followZoom: 1.8, // zoom level when following astronaut
+        lastMotionMs: 0, // Phase 0: most-recent input timestamp (for Attention)
+      };
+      let dayNight = 0;
+
+      // Stars
+      const stars = Array.from({ length: 300 }, () => ({
+        x: Math.random() * 4000 - 2000,
+        y: Math.random() * 3000 - 1500,
+        size: Math.random() * 2 + 0.5,
+        color: [C.starWhite, C.starBlue, C.starPink, C.starYellow][
+          Math.floor(Math.random() * 4)
+        ],
+        twinkle: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.01 + 0.002,
+        layer: Math.floor(Math.random() * 3),
+      }));
+
+      // Eras
+      const eras = [
+        { name: "ISS Era", count: 0 },
+        { name: "Expansion Era", count: 15 },
+        { name: "Industrial Age", count: 30 },
+        { name: "The Great Ring", count: 50 },
+        { name: "Orbital City", count: 80 },
+        { name: "Megastructure", count: 120 },
+        { name: "A Living World", count: 200 },
+        { name: "Humanity's Dream", count: 350 },
+        { name: "∞", count: 9999 },
+      ];
+      let currentEra = 0;
+
+      // Module types with population capacity
+      const modTypes = {
+        zarya: { w: 55, h: 22, cat: "core", win: 2, pop: 3 },
+        unity: { w: 35, h: 28, cat: "node", win: 0, pop: 0 },
+        destiny: { w: 50, h: 24, cat: "lab", win: 1, pop: 4 },
+        quest: { w: 20, h: 18, cat: "airlock", win: 0, pop: 0 },
+        harmony: { w: 32, h: 26, cat: "node", win: 0, pop: 0 },
+        columbus: { w: 45, h: 22, cat: "lab", win: 1, pop: 4 },
+        kibo: { w: 55, h: 26, cat: "lab", win: 1, pop: 5 },
+        cupola: { w: 18, h: 18, cat: "cupola", win: 7, pop: 2 },
+        truss: { w: 70, h: 8, cat: "truss", win: 0, pop: 0 },
+        solarArray: { w: 20, h: 110, cat: "solar", win: 0, pop: 0 },
+        radiator: { w: 22, h: 45, cat: "radiator", win: 0, pop: 0 },
+        habModule: { w: 60, h: 35, cat: "habitat", win: 4, pop: 12 },
+        bioLab: { w: 50, h: 30, cat: "lab", win: 2, pop: 6 },
+        logistics: { w: 40, h: 25, cat: "storage", win: 0, pop: 0 },
+        dockExtend: { w: 25, h: 25, cat: "dock", win: 0, pop: 0 },
+        largeSolar: { w: 25, h: 150, cat: "solar", win: 0, pop: 0 },
+        factory: { w: 70, h: 40, cat: "industrial", win: 1, pop: 8 },
+        refinery: { w: 55, h: 35, cat: "industrial", win: 0, pop: 4 },
+        greenhouse: { w: 65, h: 30, cat: "greenhouse", win: 8, pop: 6 },
+        fuelDepot: { w: 45, h: 45, cat: "storage", win: 0, pop: 2 },
+        ringSegment: { w: 40, h: 25, cat: "ring", win: 3, pop: 20 },
+        ringNode: { w: 30, h: 30, cat: "ring", win: 0, pop: 0 },
+        spoke: { w: 12, h: 80, cat: "spoke", win: 0, pop: 0 },
+        megaHab: { w: 80, h: 50, cat: "habitat", win: 8, pop: 50 },
+        commerceHub: { w: 70, h: 45, cat: "commercial", win: 6, pop: 30 },
+        medicalCenter: { w: 55, h: 40, cat: "medical", win: 3, pop: 15 },
+        shipyard: { w: 100, h: 60, cat: "industrial", win: 2, pop: 25 },
+        cathedral: { w: 90, h: 70, cat: "monument", win: 12, pop: 100 },
+        garden: { w: 85, h: 55, cat: "greenhouse", win: 15, pop: 40 },
+        array: { w: 30, h: 200, cat: "solar", win: 0, pop: 0 },
+        modular: { w: 50, h: 30, cat: "modular", win: 2, pop: 15 },
+        residential: { w: 70, h: 45, cat: "habitat", win: 6, pop: 60 },
+        park: { w: 80, h: 50, cat: "greenhouse", win: 10, pop: 25 },
+        school: { w: 55, h: 35, cat: "habitat", win: 5, pop: 40 },
+      };
+
+      // Station
+      const station = { modules: [], queue: [], building: [], ring: 0 };
+      let modId = 0;
+
+      // Life systems (activate after 200 modules)
+      let lifeActive = false;
+      let population = 0;
+      const life = {
+        ships: [],
+        drones: [],
+        shuttles: [],
+        smoke: [],
+        lights: [], // window lights state
+      };
+
+      // Astronauts - all positions in WORLD coordinates
+      const astronauts = nations.map((n, i) => ({
+        id: n.id,
+        nation: n,
+        x: (i - 2.5) * 40, // world X
+        y: -60, // world Y
+        rot: 0,
+        targetRot: Math.PI / 2,
+        state: "idle",
+        target: null,
+        workTime: 0,
+        noticeTime: 0,
+        bob: Math.random() * Math.PI * 2,
+        idleTime: 0,
+        idleMod: null,
+        armL: 0,
+        armR: 0,
+        tool: "none",
+        toolAnim: Math.random() * 100,
+      }));
+
+      // Particles (screen space)
+      const particles = [];
+
+      // ============ CONSERVATORY MODE ============
+      // A different starting flow: seed → L-system grammar → compositional
+      // chords → placements. Works alongside existing astronaut system by
+      // feeding station.queue one chord at a time.
+      // Shortest signed angular difference in [-π, π].
+      function angDiff(a, b) {
+        let d = a - b;
+        while (d > Math.PI) d -= Math.PI * 2;
+        while (d < -Math.PI) d += Math.PI * 2;
+        return d;
+      }
+
+      // Bounding box of a chord's modules in local coords.
+      function chordBBox(chord) {
+        let minX = Infinity,
+          maxX = -Infinity,
+          minY = Infinity,
+          maxY = -Infinity;
+        for (const piece of chord.modules) {
+          const ti = modTypes[piece.type];
+          if (!ti) continue;
+          const x = piece.relPos[0],
+            y = piece.relPos[1];
+          minX = Math.min(minX, x - ti.w / 2);
+          maxX = Math.max(maxX, x + ti.w / 2);
+          minY = Math.min(minY, y - ti.h / 2);
+          maxY = Math.max(maxY, y + ti.h / 2);
+        }
+        return { w: maxX - minX, h: maxY - minY };
+      }
+
+      const Conservatory = {
+        active: false,
+        decisions: {
+          seed: "Cradle",
+          question: "Shelter",
+          hour: "River",
+          signature: [], // array of [x,y] normalized polyline 0..1
+        },
+        axiomState: [], // current grammar expansion as array of role symbols
+        stepCounter: 0, // how many compositions placed
+        lastChordNames: [], // history for anti-repetition
+        growthPhase: 0, // radians — rotated by golden angle per commit
+        recentAngles: [], // last 6 chord bearings (for sector-novelty bias)
+        pendingMirror: null, // next-step target for symmetry pairing
+        rngSeed: 1,
+
+        // Deterministic PRNG — so same signature produces same subtle biases.
+        rng() {
+          // mulberry32
+          let t = (this.rngSeed += 0x6d2b79f5);
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        },
+
+        // Seed signature polyline into rngSeed (+ decision hashes).
+        reseedRng() {
+          let h = 2166136261;
+          const mix = (n) => {
+            h ^= n | 0;
+            h = Math.imul(h, 16777619);
+          };
+          mix(this.decisions.seed.charCodeAt(0));
+          mix(this.decisions.question.charCodeAt(0));
+          mix(this.decisions.hour.charCodeAt(0));
+          for (const [x, y] of this.decisions.signature) {
+            mix(Math.floor(x * 1000));
+            mix(Math.floor(y * 1000));
+          }
+          this.rngSeed = h || 1;
+        },
+
+        hourToMultiplier(h) {
+          return h === "Lichen" ? 0.45 : h === "Flame" ? 1.7 : 1.0;
+        },
+
+        start(decisions) {
+          this.decisions = decisions;
+          this.active = true;
+          this.stepCounter = 0;
+          this.lastChordNames = [];
+          this.growthPhase = 0;
+          this.recentAngles = [];
+          this.pendingMirror = null;
+          this.reseedRng();
+          Mode.hourMultiplier = this.hourToMultiplier(decisions.hour);
+
+          // Plant the seed: place starter modules from the seed's axiom.
+          const seed = Seeds[decisions.seed];
+          this.axiomState = seed.axiom.slice();
+
+          // Commit the starter chord (raw modules, not via grammar).
+          const origin = { x: 0, y: 0, rot: 0 };
+          for (const piece of seed.starter) {
+            station.queue.push({
+              type: piece.type,
+              x: origin.x + piece.relPos[0],
+              y: origin.y + piece.relPos[1],
+              rot: piece.relRot || 0,
+              _conservatoryAnchor: true,
+            });
+          }
+        },
+
+        // Feed the queue when it runs low (called from astronaut idle path).
+        planNextIfNeeded() {
+          if (!this.active) return;
+          if (station.queue.length > 2) return;
+          this.stepOnce();
+        },
+
+        stepOnce() {
+          const seedDef = Seeds[this.decisions.seed];
+          const role = Grammar.expandOne(seedDef, this.axiomState, () =>
+            this.rng(),
+          );
+          if (!role) return;
+          const chord = this.pickChord(role);
+          if (!chord) return;
+          const pose = this.findPlacement(chord);
+          if (!pose) return;
+          this.commitChord(chord, pose);
+          this.stepCounter++;
+          this.lastChordNames.unshift(chord.name);
+          if (this.lastChordNames.length > 12) this.lastChordNames.pop();
+        },
+
+        pickChord(role) {
+          const seedName = this.decisions.seed;
+          const question = this.decisions.question;
+          const library = ChordLib[seedName] || [];
+          const candidates = library.filter((c) => c.role === role);
+          if (!candidates.length) return null;
+          // If alternatives exist, rule out chords used in the last 3 placements.
+          let pool = candidates;
+          if (candidates.length > 1) {
+            const recent3 = this.lastChordNames.slice(0, 3);
+            const filtered = candidates.filter(
+              (c) => !recent3.includes(c.name),
+            );
+            if (filtered.length) pool = filtered;
+          }
+          const scored = pool.map((c) => {
+            const tagMatch = (c.tags || []).includes(question.toLowerCase())
+              ? 1.5
+              : 0;
+            // Soft decay for any appearance in the 12-long history.
+            const historyDecay =
+              this.lastChordNames.reduce(
+                (acc, n, i) => acc + (n === c.name ? 1 / (i + 1) : 0),
+                0,
+              ) * -0.6;
+            const jitter = this.rng() * 0.6;
+            return {
+              c,
+              s: tagMatch + historyDecay + jitter + (c.base || 0),
+            };
+          });
+          scored.sort((a, b) => b.s - a.s);
+          const top = scored.slice(0, Math.min(3, scored.length));
+          const r = this.rng();
+          if (top.length === 1) return top[0].c;
+          if (r < 0.55) return top[0].c;
+          if (r < 0.85 && top[1]) return top[1].c;
+          return (top[2] || top[1] || top[0]).c;
+        },
+
+        // Find a placement pose for the chord. Three changes from the naive
+        // "outward ray" approach that made stations linear:
+        //   1. **Sector novelty** — anchors in under-used angular sectors win.
+        //   2. **Golden-angle rotation** — the outward vector is offset by the
+        //      accumulated growthPhase so successive placements trace a spiral
+        //      rather than extending the same ray.
+        //   3. **Pending mirror** — if a mirror pose is queued from the last
+        //      commit, attempt it *first* for symmetry pairing.
+        findPlacement(chord) {
+          const mods = station.modules.slice();
+          if (!mods.length) return null;
+
+          // Try the pending mirror first for visible symmetry.
+          if (this.pendingMirror) {
+            const pose = this.pendingMirror;
+            this.pendingMirror = null;
+            if (this.chordFits(chord, pose)) return pose;
+            // Fall through to normal placement on failure.
+          }
+
+          // Angular density histogram: 12 bins × 30° each. Lower count = more room.
+          const bins = new Array(12).fill(0);
+          for (const o of mods) {
+            const a = Math.atan2(o.y, o.x);
+            const bin = Math.floor(((a + Math.PI) / (Math.PI * 2)) * 12) % 12;
+            bins[bin]++;
+          }
+
+          // Recent-angle penalty — bearings used in the last few placements
+          // score lower, forcing the planner to explore other sectors. The
+          // window is π/2 (quadrant) so recent work blocks a whole quadrant.
+          const recentPenalty = (a) => {
+            let p = 0;
+            for (let i = 0; i < this.recentAngles.length; i++) {
+              const d = Math.abs(angDiff(a, this.recentAngles[i]));
+              if (d < Math.PI / 2) {
+                p += (1 - d / (Math.PI / 2)) * (1 - i * 0.12);
+              }
+            }
+            return p;
+          };
+
+          // Identify the emptiest angular sector so we can aim fallback
+          // bearings at it. This prevents the whole colony from drifting
+          // off-axis when many bearings are near the recent set.
+          let emptyBin = 0,
+            emptyCount = Infinity;
+          for (let b = 0; b < 12; b++) {
+            if (bins[b] < emptyCount) {
+              emptyCount = bins[b];
+              emptyBin = b;
+            }
+          }
+          const emptyBearing = ((emptyBin + 0.5) / 12) * Math.PI * 2 - Math.PI;
+
+          const neighbors = (m) => {
+            let c = 0;
+            for (const o of mods) {
+              if (o === m) continue;
+              const dx = o.x - m.x,
+                dy = o.y - m.y;
+              if (dx * dx + dy * dy < 90 * 90) c++;
+            }
+            return c;
+          };
+
+          const anchors = mods
+            .map((m) => {
+              const a = Math.atan2(m.y, m.x);
+              const bin = Math.floor(((a + Math.PI) / (Math.PI * 2)) * 12) % 12;
+              const d = Math.hypot(m.x, m.y);
+              const n = neighbors(m);
+              const density = bins[bin]; // higher = sector already full
+              const isCoreSeed = m.type === "zarya" || m.type === "unity";
+              // Score rewards: distance, openness, sector novelty, jitter.
+              const score =
+                d * 0.008 -
+                n * 0.4 -
+                density * 0.35 -
+                recentPenalty(a) * 1.2 +
+                this.rng() * 1.4 +
+                (isCoreSeed ? -0.5 : 0);
+              return { m, score, bearing: a };
+            })
+            .sort((a, b) => b.score - a.score);
+
+          // Try top candidates. Stop searching after the first fit so the
+          // ordering actually matters.
+          const tryCount = Math.min(anchors.length, 14);
+          for (let i = 0; i < tryCount; i++) {
+            const { m: anchor } = anchors[i];
+            const anchorTi = anchor.ti;
+            if (!anchorTi) continue;
+            const len = Math.hypot(anchor.x, anchor.y) || 1;
+
+            // Base outward, rotated by accumulated growth phase.
+            const baseA = Math.atan2(anchor.y, anchor.x);
+            // Direction from the anchor toward the emptiest sector — always
+            // present so the planner can escape a stuck corridor even when
+            // every local bearing is recently-used.
+            const emptyDx = Math.cos(emptyBearing) * 400 - anchor.x;
+            const emptyDy = Math.sin(emptyBearing) * 400 - anchor.y;
+            const emptyDir = Math.atan2(emptyDy, emptyDx);
+            const golden = 2.399963229728653;
+            const candidateBearings = [
+              emptyDir,
+              baseA + this.growthPhase * 0.75,
+              baseA + golden,
+              baseA + (this.rng() - 0.5) * 0.4,
+              baseA + Math.PI / 2,
+              baseA - Math.PI / 2,
+              baseA + (this.rng() - 0.5) * 1.2,
+              emptyDir + (this.rng() - 0.5) * 0.4,
+              baseA + Math.PI,
+            ];
+
+            const rots = [
+              0,
+              Math.PI / 8,
+              -Math.PI / 8,
+              Math.PI / 3,
+              -Math.PI / 3,
+              Math.PI / 2,
+              -Math.PI / 2,
+            ];
+
+            for (const bearing of candidateBearings) {
+              const dx = Math.cos(bearing);
+              const dy = Math.sin(bearing);
+              for (const rot of rots) {
+                const gap = 6;
+                const bb = chordBBox(chord);
+                // Isotropic offset distance: enough to clear both AABBs.
+                const dist =
+                  Math.max(anchorTi.w, anchorTi.h) / 2 +
+                  Math.max(bb.w, bb.h) / 2 +
+                  gap;
+                const pose = {
+                  x: anchor.x + dx * dist,
+                  y: anchor.y + dy * dist,
+                  rot: rot + bearing * 0.15,
+                };
+                if (this.chordFits(chord, pose)) return pose;
+              }
+            }
+          }
+          return null;
+        },
+
+        chordFits(chord, pose) {
+          for (const piece of chord.modules) {
+            const wp = this.chordPieceWorldPos(piece, pose);
+            const ti = modTypes[piece.type];
+            if (!ti) return false;
+            // AABB collision check vs existing modules.
+            for (const m of station.modules) {
+              const mt = m.ti;
+              if (!mt) continue;
+              const dx = Math.abs(wp.x - m.x);
+              const dy = Math.abs(wp.y - m.y);
+              const sw = (ti.w + mt.w) / 2 - 4;
+              const sh = (ti.h + mt.h) / 2 - 4;
+              if (dx < sw && dy < sh) return false;
+            }
+          }
+          return true;
+        },
+
+        chordPieceWorldPos(piece, pose) {
+          const cr = Math.cos(pose.rot || 0),
+            sr = Math.sin(pose.rot || 0);
+          const rx = piece.relPos[0] * cr - piece.relPos[1] * sr;
+          const ry = piece.relPos[0] * sr + piece.relPos[1] * cr;
+          return { x: pose.x + rx, y: pose.y + ry };
+        },
+
+        commitChord(chord, pose) {
+          for (const piece of chord.modules) {
+            const wp = this.chordPieceWorldPos(piece, pose);
+            station.queue.push({
+              type: piece.type,
+              x: wp.x,
+              y: wp.y,
+              rot: (piece.relRot || 0) + (pose.rot || 0),
+            });
+          }
+
+          // Update growth state — rotate phase by golden angle and record
+          // the angular bearing for sector-novelty scoring.
+          const bearing = Math.atan2(pose.y, pose.x);
+          this.growthPhase += 2.399963229728653; // golden angle
+          this.recentAngles.unshift(bearing);
+          if (this.recentAngles.length > 6) this.recentAngles.pop();
+
+          // Opportunistic mirror pair. 55% chance, disabled for core chords
+          // to avoid over-crowding the center. The next planner step will
+          // check pendingMirror first and prefer it if it fits.
+          if (
+            chord.role !== "CORE" &&
+            chord.role !== "CROWN" &&
+            this.rng() < 0.7
+          ) {
+            // Two mirror types: horizontal (over x-axis) or origin (through center).
+            const mirrorMode = this.rng() < 0.5 ? "y" : "origin";
+            const mx = mirrorMode === "y" ? pose.x : -pose.x;
+            const my = mirrorMode === "y" ? -pose.y : -pose.y;
+            this.pendingMirror = {
+              x: mx,
+              y: my,
+              rot: -(pose.rot || 0),
+            };
+          }
+
+          Events.emit("chord:committed", {
+            name: chord.name,
+            role: chord.role,
+            pose,
+            count: chord.modules.length,
+          });
+        },
+      };
+
+      // ============ SEEDS ============
+      // Starter configurations + grammars.
+      const Seeds = {
+        Cradle: {
+          // Triple hab core ring.
+          starter: [
+            { type: "zarya", relPos: [0, 0], relRot: 0 },
+            { type: "unity", relPos: [-45, 0], relRot: 0 },
+            { type: "harmony", relPos: [45, 0], relRot: 0 },
+            { type: "cupola", relPos: [0, 22], relRot: 0 },
+            { type: "truss", relPos: [0, -28], relRot: 0 },
+            { type: "solarArray", relPos: [-60, -60], relRot: 0 },
+            { type: "solarArray", relPos: [60, -60], relRot: 0 },
+          ],
+          axiom: ["CORE", "ARM", "ARM", "ARM", "ARM", "ARM", "RIB", "RIB"],
+          rules: {
+            CORE: [
+              { p: 0.3, produce: ["ARM"] },
+              { p: 0.35, produce: ["WARD", "ARM"] },
+              { p: 0.2, produce: ["CROWN"] },
+              { p: 0.15, produce: ["RIB", "ARM"] },
+            ],
+            ARM: [
+              { p: 0.3, produce: ["RIB", "ARM"] },
+              { p: 0.25, produce: ["WARD", "GARDEN"] },
+              { p: 0.2, produce: ["GARDEN", "WARD"] },
+              { p: 0.15, produce: ["ARM", "RIB"] },
+              { p: 0.1, produce: ["CROWN"] },
+            ],
+            RIB: [
+              { p: 0.7, produce: ["WARD"] },
+              { p: 0.3, produce: ["GARDEN"] },
+            ],
+            WARD: [
+              { p: 0.5, produce: [] },
+              { p: 0.5, produce: ["GARDEN"] },
+            ],
+            GARDEN: [{ p: 1.0, produce: [] }],
+            CROWN: [{ p: 1.0, produce: [] }],
+          },
+        },
+
+        Filament: {
+          // Tighter starter so early growth isn't biased toward one long axis.
+          // A central cupola with labs reaching both directions + a truss arm.
+          starter: [
+            { type: "cupola", relPos: [0, 0], relRot: 0 },
+            { type: "destiny", relPos: [48, -4], relRot: 0 },
+            { type: "columbus", relPos: [-48, -4], relRot: 0 },
+            { type: "truss", relPos: [0, 35], relRot: Math.PI / 2 },
+            { type: "habModule", relPos: [0, 75], relRot: 0 },
+          ],
+          // Fork early so the axiom doesn't just push one chain outward.
+          axiom: ["FORK", "SEG", "BUD", "FORK", "SEG", "BUD", "SEG"],
+          rules: {
+            SEG: [
+              { p: 0.35, produce: ["SEG"] },
+              { p: 0.3, produce: ["BUD", "SEG"] },
+              { p: 0.25, produce: ["FORK"] },
+              { p: 0.1, produce: ["TIP"] },
+            ],
+            BUD: [
+              { p: 0.45, produce: ["BLOOM"] },
+              { p: 0.35, produce: ["WARD"] },
+              { p: 0.2, produce: [] },
+            ],
+            FORK: [
+              { p: 0.7, produce: ["SEG", "BUD", "SEG"] },
+              { p: 0.3, produce: ["SEG", "SEG", "SEG"] },
+            ],
+            BLOOM: [{ p: 1.0, produce: [] }],
+            WARD: [{ p: 1.0, produce: [] }],
+            TIP: [{ p: 1.0, produce: [] }],
+          },
+        },
+      };
+
+      // ============ GRAMMAR ENGINE ============
+      const Grammar = {
+        // Consume one symbol from the axiom and expand it via a rule.
+        // Returns the *role* (e.g., 'ARM') to be realized as a chord, or null.
+        expandOne(seedDef, axiomState, rng) {
+          if (!axiomState.length) {
+            // Reset to axiom — re-primes growth after exhaustion.
+            axiomState.push(...seedDef.axiom);
+          }
+          const symbol = axiomState.shift();
+          const ruleSet = seedDef.rules[symbol];
+          if (!ruleSet) return symbol; // terminal
+          // Weighted pick of a production.
+          const r = rng();
+          let acc = 0;
+          for (const rule of ruleSet) {
+            acc += rule.p;
+            if (r <= acc) {
+              // Enqueue produced symbols at the front for depth-first feel.
+              axiomState.unshift(...rule.produce);
+              return symbol; // the role realized is the current symbol
+            }
+          }
+          return symbol;
+        },
+      };
+
+      // ============ CHORD LIBRARY ============
+      // Each chord: a named motif of 2–6 modules in local coords.
+      // role matches grammar symbols. tags hint question-affinity.
+      const ChordLib = {
+        Cradle: [
+          // CORE role (inner ring reinforcement)
+          {
+            name: "core-lab",
+            role: "CORE",
+            tags: ["study", "shelter"],
+            base: 0.3,
+            modules: [
+              { type: "destiny", relPos: [0, 0] },
+              { type: "harmony", relPos: [48, 0] },
+            ],
+          },
+          // ARM role (radial extension)
+          {
+            name: "arm-hab",
+            role: "ARM",
+            tags: ["shelter"],
+            base: 0.4,
+            modules: [
+              { type: "habModule", relPos: [0, 0] },
+              { type: "logistics", relPos: [0, 32] },
+            ],
+          },
+          {
+            name: "arm-lab",
+            role: "ARM",
+            tags: ["study"],
+            base: 0.35,
+            modules: [
+              { type: "destiny", relPos: [0, 0] },
+              { type: "columbus", relPos: [48, 0] },
+              { type: "cupola", relPos: [-22, 18], relRot: 0.2 },
+            ],
+          },
+          {
+            name: "arm-industry",
+            role: "ARM",
+            tags: ["passage"],
+            base: 0.3,
+            modules: [
+              { type: "factory", relPos: [0, 0] },
+              { type: "refinery", relPos: [54, 0] },
+              { type: "largeSolar", relPos: [0, -60] },
+            ],
+          },
+          // RIB role (mid-ring decoration)
+          {
+            name: "rib-solar",
+            role: "RIB",
+            tags: ["passage", "shelter"],
+            base: 0.5,
+            modules: [
+              { type: "truss", relPos: [0, 0] },
+              { type: "solarArray", relPos: [0, -60] },
+              { type: "radiator", relPos: [0, 40] },
+            ],
+          },
+          {
+            name: "rib-node",
+            role: "RIB",
+            tags: ["shelter"],
+            base: 0.4,
+            modules: [
+              { type: "dockExtend", relPos: [0, 0] },
+              { type: "truss", relPos: [32, 0] },
+            ],
+          },
+          // WARD role (outer habitat)
+          {
+            name: "ward-residential",
+            role: "WARD",
+            tags: ["shelter"],
+            base: 0.5,
+            modules: [
+              { type: "residential", relPos: [0, 0] },
+              { type: "school", relPos: [0, 40] },
+            ],
+          },
+          {
+            name: "ward-medical",
+            role: "WARD",
+            tags: ["shelter", "witness"],
+            base: 0.3,
+            modules: [
+              { type: "medicalCenter", relPos: [0, 0] },
+              { type: "megaHab", relPos: [54, 0] },
+            ],
+          },
+          // GARDEN role
+          {
+            name: "garden-small",
+            role: "GARDEN",
+            tags: ["song", "shelter"],
+            base: 0.5,
+            modules: [
+              { type: "greenhouse", relPos: [0, 0] },
+              { type: "greenhouse", relPos: [55, 0] },
+            ],
+          },
+          {
+            name: "garden-monument",
+            role: "GARDEN",
+            tags: ["song", "witness"],
+            base: 0.3,
+            modules: [
+              { type: "garden", relPos: [0, 0] },
+              { type: "park", relPos: [58, 0] },
+            ],
+          },
+          // CROWN role (rare centerpiece)
+          {
+            name: "crown-cathedral",
+            role: "CROWN",
+            tags: ["witness", "song"],
+            base: 0.6,
+            modules: [{ type: "cathedral", relPos: [0, 0] }],
+          },
+          {
+            name: "crown-commerce",
+            role: "CROWN",
+            tags: ["passage"],
+            base: 0.4,
+            modules: [
+              { type: "commerceHub", relPos: [0, 0] },
+              { type: "shipyard", relPos: [60, 0] },
+            ],
+          },
+        ],
+
+        Filament: [
+          // SEG role (continuing the chain)
+          {
+            name: "seg-lab",
+            role: "SEG",
+            tags: ["study"],
+            base: 0.5,
+            modules: [
+              { type: "destiny", relPos: [0, 0] },
+              { type: "truss", relPos: [42, 0] },
+            ],
+          },
+          {
+            name: "seg-hab",
+            role: "SEG",
+            tags: ["shelter"],
+            base: 0.5,
+            modules: [
+              { type: "habModule", relPos: [0, 0] },
+              { type: "truss", relPos: [45, 0] },
+            ],
+          },
+          {
+            name: "seg-cupola",
+            role: "SEG",
+            tags: ["witness", "study"],
+            base: 0.4,
+            modules: [
+              { type: "cupola", relPos: [0, 0] },
+              { type: "truss", relPos: [18, 0] },
+            ],
+          },
+          {
+            name: "seg-commerce",
+            role: "SEG",
+            tags: ["passage"],
+            base: 0.3,
+            modules: [
+              { type: "logistics", relPos: [0, 0] },
+              { type: "dockExtend", relPos: [32, 0] },
+            ],
+          },
+          // BUD role (a bloom of small modules)
+          {
+            name: "bud-garden",
+            role: "BUD",
+            tags: ["song"],
+            base: 0.6,
+            modules: [
+              { type: "greenhouse", relPos: [0, 0] },
+              { type: "cupola", relPos: [36, 0] },
+            ],
+          },
+          {
+            name: "bud-ward",
+            role: "BUD",
+            tags: ["shelter"],
+            base: 0.5,
+            modules: [{ type: "habModule", relPos: [0, 0] }],
+          },
+          // FORK role (branching point)
+          {
+            name: "fork-node",
+            role: "FORK",
+            tags: ["study", "passage"],
+            base: 0.5,
+            modules: [
+              { type: "unity", relPos: [0, 0] },
+              { type: "destiny", relPos: [0, -36] },
+              { type: "habModule", relPos: [0, 36] },
+            ],
+          },
+          // BLOOM role (flourish)
+          {
+            name: "bloom-garden",
+            role: "BLOOM",
+            tags: ["song"],
+            base: 0.7,
+            modules: [
+              { type: "garden", relPos: [0, 0] },
+              { type: "park", relPos: [50, 0] },
+            ],
+          },
+          {
+            name: "bloom-monument",
+            role: "BLOOM",
+            tags: ["witness", "song"],
+            base: 0.4,
+            modules: [{ type: "cathedral", relPos: [0, 0] }],
+          },
+          // WARD role
+          {
+            name: "ward-megahab",
+            role: "WARD",
+            tags: ["shelter"],
+            base: 0.5,
+            modules: [
+              { type: "megaHab", relPos: [0, 0] },
+              { type: "residential", relPos: [0, 42] },
+            ],
+          },
+          // TIP role (endings)
+          {
+            name: "tip-solar",
+            role: "TIP",
+            tags: ["passage", "study"],
+            base: 0.5,
+            modules: [{ type: "largeSolar", relPos: [0, 0] }],
+          },
+          {
+            name: "tip-cupola",
+            role: "TIP",
+            tags: ["witness"],
+            base: 0.5,
+            modules: [{ type: "cupola", relPos: [0, 0] }],
+          },
+        ],
+      };
+
+      function initStation() {
+        station.queue = [
+          // ISS Core
+          { type: "zarya", x: 0, y: 0 },
+          { type: "unity", x: -45, y: 0 },
+          { type: "destiny", x: -88, y: 0 },
+          { type: "harmony", x: 45, y: 0 },
+          { type: "truss", x: 0, y: -35 },
+          { type: "truss", x: -70, y: -35 },
+          { type: "truss", x: 70, y: -35 },
+          { type: "truss", x: -140, y: -35 },
+          { type: "truss", x: 140, y: -35 },
+          { type: "solarArray", x: -175, y: -35 },
+          { type: "solarArray", x: 175, y: -35 },
+          { type: "solarArray", x: -175, y: -90 },
+          { type: "solarArray", x: 175, y: -90 },
+          { type: "radiator", x: -105, y: -65 },
+          { type: "radiator", x: 105, y: -65 },
+          { type: "columbus", x: 45, y: -30 },
+          { type: "kibo", x: 45, y: 32 },
+          { type: "cupola", x: -45, y: 24 },
+          { type: "quest", x: -88, y: -24 },
+          // Expansion
+          { type: "habModule", x: -130, y: 0 },
+          { type: "habModule", x: 95, y: 0 },
+          { type: "bioLab", x: -130, y: 42 },
+          { type: "logistics", x: 95, y: 40 },
+          { type: "dockExtend", x: -130, y: -35 },
+          { type: "dockExtend", x: 95, y: -35 },
+          { type: "largeSolar", x: -220, y: -60 },
+          { type: "largeSolar", x: 220, y: -60 },
+          { type: "truss", x: -210, y: -35 },
+          { type: "truss", x: 210, y: -35 },
+          // Industrial
+          { type: "factory", x: -180, y: 60 },
+          { type: "refinery", x: 180, y: 60 },
+          { type: "greenhouse", x: 0, y: 70 },
+          { type: "fuelDepot", x: -260, y: 0 },
+          { type: "fuelDepot", x: 260, y: 0 },
+          { type: "habModule", x: -180, y: -60 },
+          { type: "habModule", x: 180, y: -60 },
+          { type: "greenhouse", x: -85, y: 70 },
+          { type: "greenhouse", x: 85, y: 70 },
+          { type: "largeSolar", x: -290, y: -60 },
+          { type: "largeSolar", x: 290, y: -60 },
+          // Ring
+          { type: "spoke", x: 0, y: 140 },
+          { type: "spoke", x: 0, y: -150 },
+          { type: "ringNode", x: 0, y: 200 },
+          { type: "ringNode", x: 0, y: -210 },
+          { type: "ringSegment", x: 55, y: 195 },
+          { type: "ringSegment", x: -55, y: 195 },
+          { type: "ringSegment", x: 110, y: 180 },
+          { type: "ringSegment", x: -110, y: 180 },
+          { type: "ringSegment", x: 55, y: -200 },
+          { type: "ringSegment", x: -55, y: -200 },
+          { type: "ringSegment", x: 110, y: -185 },
+          { type: "ringSegment", x: -110, y: -185 },
+          { type: "ringSegment", x: 155, y: 155 },
+          { type: "ringSegment", x: -155, y: 155 },
+          { type: "ringSegment", x: 155, y: -160 },
+          { type: "ringSegment", x: -155, y: -160 },
+          { type: "ringNode", x: 185, y: 110 },
+          { type: "ringNode", x: -185, y: 110 },
+          { type: "ringNode", x: 185, y: -115 },
+          { type: "ringNode", x: -185, y: -115 },
+          // City
+          { type: "megaHab", x: -320, y: 100 },
+          { type: "megaHab", x: 320, y: 100 },
+          { type: "commerceHub", x: 0, y: 280 },
+          { type: "medicalCenter", x: -220, y: 170 },
+          { type: "medicalCenter", x: 220, y: 170 },
+          { type: "array", x: -370, y: -60 },
+          { type: "array", x: 370, y: -60 },
+          { type: "ringSegment", x: 200, y: 60 },
+          { type: "ringSegment", x: -200, y: 60 },
+          { type: "greenhouse", x: -320, y: 160 },
+          { type: "greenhouse", x: 320, y: 160 },
+          { type: "factory", x: -370, y: 60 },
+          { type: "factory", x: 370, y: 60 },
+          // Mega
+          { type: "shipyard", x: 0, y: -280 },
+          { type: "cathedral", x: 0, y: 360 },
+          { type: "garden", x: -420, y: 0 },
+          { type: "garden", x: 420, y: 0 },
+          { type: "array", x: -470, y: -60 },
+          { type: "array", x: 470, y: -60 },
+          { type: "megaHab", x: -420, y: -110 },
+          { type: "megaHab", x: 420, y: -110 },
+          // Toward 200
+          { type: "residential", x: -320, y: -170 },
+          { type: "residential", x: 320, y: -170 },
+          { type: "park", x: 0, y: -370 },
+          { type: "school", x: -220, y: -220 },
+          { type: "school", x: 220, y: -220 },
+          { type: "ringSegment", x: 220, y: 220 },
+          { type: "ringSegment", x: -220, y: 220 },
+          { type: "megaHab", x: 0, y: 440 },
+          { type: "greenhouse", x: -160, y: 320 },
+          { type: "greenhouse", x: 160, y: 320 },
+          { type: "factory", x: -470, y: 110 },
+          { type: "factory", x: 470, y: 110 },
+          { type: "residential", x: -370, y: 220 },
+          { type: "residential", x: 370, y: 220 },
+          { type: "ringSegment", x: 250, y: -50 },
+          { type: "ringSegment", x: -250, y: -50 },
+          { type: "megaHab", x: -150, y: -300 },
+          { type: "megaHab", x: 150, y: -300 },
+          { type: "commerceHub", x: -400, y: -200 },
+          { type: "commerceHub", x: 400, y: -200 },
+        ];
+        station.ring = 1;
+      }
+
+      function expandStation() {
+        const r = station.ring;
+        const baseR = 480 + r * 150;
+        const segs = 14 + r * 4;
+        const types = [
+          "modular",
+          "residential",
+          "greenhouse",
+          "factory",
+          "ringSegment",
+          "megaHab",
+          "park",
+          "school",
+        ];
+
+        for (let i = 0; i < segs; i++) {
+          const a = (i / segs) * Math.PI * 2;
+          const type = types[i % types.length];
+          station.queue.push({
+            type,
+            x: Math.cos(a) * baseR,
+            y: Math.sin(a) * baseR,
+            rot: a + Math.PI / 2,
+          });
+
+          if (i % Math.floor(segs / 4) === 0) {
+            station.queue.push({
+              type: "array",
+              x: Math.cos(a) * (baseR + 110),
+              y: Math.sin(a) * (baseR + 110),
+              rot: a,
+            });
+          }
+        }
+
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2 + Math.PI / 12;
+          station.queue.push({
+            type: "spoke",
+            x: Math.cos(a) * (baseR - 70),
+            y: Math.sin(a) * (baseR - 70),
+            rot: a,
+          });
+        }
+
+        station.ring++;
+      }
+
+      // Assign work to astronaut
+      function assignBuild(astro) {
+        if (Mode.current === "boot") return false;
+        if (station.queue.length === 0) {
+          if (Mode.current === "conservatory") {
+            // Try up to a few grammar steps; some may fail placement.
+            for (let i = 0; i < 5 && station.queue.length === 0; i++) {
+              Conservatory.stepOnce();
+            }
+          } else {
+            expandStation();
+          }
+        }
+        if (station.queue.length === 0) return false;
+
+        const next = station.queue.shift();
+        const ti = modTypes[next.type];
+        const buildTime = 2000 + ti.w * 30 + ti.h * 18;
+
+        const mod = {
+          ...next,
+          id: modId++,
+          built: false,
+          hp: 1,
+          progress: 0,
+          buildTime,
+          ti,
+          assignedTo: astro.id,
+        };
+
+        mod.z = moduleZ(mod);
+        station.modules.push(mod);
+        station.building.push(mod);
+
+        astro.state = "noticing";
+        astro.noticeTime = 0;
+        astro.target = mod;
+        return true;
+      }
+
+      function assignRepair(astro, mod) {
+        mod.assignedTo = astro.id;
+        astro.state = "noticing";
+        astro.noticeTime = 0;
+        astro.target = mod;
+      }
+
+      // Life system functions
+      function activateLife() {
+        if (lifeActive) return;
+        lifeActive = true;
+
+        // Initialize window lights for all modules
+        station.modules.forEach((m) => {
+          if (m.built && m.ti.win > 0) {
+            for (let i = 0; i < m.ti.win; i++) {
+              life.lights.push({
+                modId: m.id,
+                idx: i,
+                lit: Math.random() > 0.25,
+                timer: Math.random() * 8000,
+                rate: 4000 + Math.random() * 12000,
+              });
+            }
+          }
+        });
+      }
+
+      function updateLife(dt) {
+        if (!lifeActive) {
+          if (station.modules.filter((m) => m.built).length >= 200)
+            activateLife();
+          return;
+        }
+
+        // Population
+        population = station.modules.reduce(
+          (s, m) => s + (m.built ? m.ti.pop || 0 : 0),
+          0,
+        );
+
+        // Spawn ships
+        if (life.ships.length < 4 && Math.random() < 0.00008 * dt) {
+          const a = Math.random() * Math.PI * 2;
+          const docks = station.modules.filter(
+            (m) => m.built && m.ti.cat === "dock",
+          );
+          const target =
+            docks[Math.floor(Math.random() * docks.length)] ||
+            station.modules[0];
+          life.ships.push({
+            x: Math.cos(a) * 900,
+            y: Math.sin(a) * 900,
+            tx: target?.x || 0,
+            ty: target?.y || 0,
+            rot: 0,
+            state: "in",
+            timer: 0,
+            size: 12 + Math.random() * 8,
+          });
+        }
+
+        // Spawn drones
+        if (life.drones.length < 10 && Math.random() < 0.0002 * dt) {
+          const src =
+            station.modules[Math.floor(Math.random() * station.modules.length)];
+          if (src?.built) {
+            life.drones.push({
+              x: src.x,
+              y: src.y,
+              tx: src.x + (Math.random() - 0.5) * 150,
+              ty: src.y + (Math.random() - 0.5) * 150,
+              rot: 0,
+              life: 8000 + Math.random() * 15000,
+            });
+          }
+        }
+
+        // Spawn shuttles between modules
+        if (life.shuttles.length < 8 && Math.random() < 0.0004 * dt) {
+          const built = station.modules.filter((m) => m.built && m.ti.pop > 0);
+          if (built.length >= 2) {
+            const from = built[Math.floor(Math.random() * built.length)];
+            const to = built[Math.floor(Math.random() * built.length)];
+            if (from.id !== to.id) {
+              life.shuttles.push({
+                x: from.x,
+                y: from.y,
+                tx: to.x,
+                ty: to.y,
+                progress: 0,
+                speed: 0.0002 + Math.random() * 0.00015,
+              });
+            }
+          }
+        }
+
+        // Update ships
+        for (let i = life.ships.length - 1; i >= 0; i--) {
+          const s = life.ships[i];
+          const dx = s.tx - s.x,
+            dy = s.ty - s.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          s.rot = Math.atan2(dy, dx);
+
+          if (s.state === "in") {
+            if (dist > 25) {
+              const spd = Math.min(dist * 0.0008, 0.6);
+              s.x += dx * spd * dt * 0.016;
+              s.y += dy * spd * dt * 0.016;
+            } else {
+              s.state = "docked";
+              s.timer = 0;
+            }
+          } else if (s.state === "docked") {
+            s.timer += dt;
+            if (s.timer > 12000 + Math.random() * 8000) {
+              s.state = "out";
+              s.tx = s.x + (Math.random() - 0.5) * 1800;
+              s.ty = s.y + (Math.random() - 0.5) * 1800;
+            }
+          } else {
+            s.x += dx * 0.0015 * dt * 0.016;
+            s.y += dy * 0.0015 * dt * 0.016;
+            if (dist > 1000) life.ships.splice(i, 1);
+          }
+        }
+
+        // Update drones
+        for (let i = life.drones.length - 1; i >= 0; i--) {
+          const d = life.drones[i];
+          d.life -= dt;
+          if (d.life <= 0) {
+            life.drones.splice(i, 1);
+            continue;
+          }
+
+          const dx = d.tx - d.x,
+            dy = d.ty - d.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > 3) {
+            d.x += dx * 0.0015 * dt * 0.016;
+            d.y += dy * 0.0015 * dt * 0.016;
+            d.rot = Math.atan2(dy, dx);
+          } else {
+            const near =
+              station.modules[
+                Math.floor(Math.random() * station.modules.length)
+              ];
+            if (near?.built) {
+              d.tx = near.x + (Math.random() - 0.5) * 80;
+              d.ty = near.y + (Math.random() - 0.5) * 80;
+            }
+          }
+        }
+
+        // Update shuttles
+        for (let i = life.shuttles.length - 1; i >= 0; i--) {
+          const s = life.shuttles[i];
+          s.progress += s.speed * dt;
+          if (s.progress >= 1) {
+            life.shuttles.splice(i, 1);
+            continue;
+          }
+
+          const t = s.progress;
+          const mx = (s.x + s.tx) / 2 + Math.sin(s.x * 0.1) * 30;
+          const my = (s.y + s.ty) / 2 + Math.cos(s.y * 0.1) * 30;
+          s.cx = (1 - t) * (1 - t) * s.x + 2 * (1 - t) * t * mx + t * t * s.tx;
+          s.cy = (1 - t) * (1 - t) * s.y + 2 * (1 - t) * t * my + t * t * s.ty;
+        }
+
+        // Window lights flicker
+        life.lights.forEach((l) => {
+          l.timer += dt;
+          if (l.timer > l.rate) {
+            l.timer = 0;
+            if (Math.random() < 0.25) l.lit = !l.lit;
+          }
+        });
+
+        // Industrial smoke
+        const factories = station.modules.filter(
+          (m) => m.built && m.ti.cat === "industrial",
+        );
+        factories.forEach((f) => {
+          if (Math.random() < 0.0015 * dt) {
+            life.smoke.push({
+              x: f.x + (Math.random() - 0.5) * 15,
+              y: f.y - f.ti.h / 2 - 5,
+              size: 2 + Math.random() * 4,
+              life: 1,
+              vx: (Math.random() - 0.5) * 0.2,
+              vy: -0.15 - Math.random() * 0.2,
+            });
+          }
+        });
+
+        // Update smoke
+        for (let i = life.smoke.length - 1; i >= 0; i--) {
+          const s = life.smoke[i];
+          s.x += s.vx;
+          s.y += s.vy;
+          s.size *= 1.008;
+          s.life -= 0.006;
+          if (s.life <= 0) life.smoke.splice(i, 1);
+        }
+      }
+
+      function getBuiltModule() {
+        const built = station.modules.filter((m) => m.built);
+        return built.length > 0
+          ? built[Math.floor(Math.random() * built.length)]
+          : null;
+      }
+
+      // Update astronaut (all in world coords)
+      function updateAstro(a, dt) {
+        a.bob += 0.006;
+        a.toolAnim += dt * 0.002;
+
+        document
+          .getElementById(`crew-${a.id}`)
+          ?.classList.toggle("active", a.state !== "idle");
+
+        switch (a.state) {
+          case "idle":
+            a.tool = "none";
+            a.idleTime += dt;
+
+            if (!a.idleMod || a.idleTime > 6000) {
+              a.idleMod = getBuiltModule();
+              a.idleTime = 0;
+            }
+
+            if (a.idleMod) {
+              const ox =
+                Math.sin(a.bob * 0.4 + astronauts.indexOf(a) * 1.5) * 25;
+              const oy = Math.cos(a.bob * 0.3 + astronauts.indexOf(a)) * 18;
+              const tx = a.idleMod.x + ox;
+              const ty = a.idleMod.y - 35 + oy;
+              a.x += (tx - a.x) * 0.012;
+              a.y += (ty - a.y) * 0.012;
+            }
+
+            a.targetRot = Math.PI / 2;
+            a.armL = Math.sin(a.bob * 0.4) * 0.06;
+            a.armR = Math.sin(a.bob * 0.4 + 1) * 0.06;
+
+            // Look for work
+            const broken = station.modules.find(
+              (m) => m.broken && !m.assignedTo,
+            );
+            if (broken) assignRepair(a, broken);
+            else if (!station.building.find((b) => b.assignedTo === a.id))
+              assignBuild(a);
+            break;
+
+          case "noticing":
+            a.noticeTime += dt;
+            if (a.target) {
+              const dx = a.target.x - a.x,
+                dy = a.target.y - a.y;
+              a.targetRot = Math.atan2(dy, dx) + Math.PI / 2;
+            }
+            a.armL = -0.4 + Math.sin(a.noticeTime * 0.003) * 0.08;
+            a.armR = 0.1;
+            if (a.noticeTime > 400) a.state = "traveling";
+            break;
+
+          case "traveling":
+            if (!a.target) {
+              a.state = "idle";
+              break;
+            }
+
+            const dx = a.target.x - a.x,
+              dy = a.target.y - a.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            a.armL = Math.sin(a.bob * 1.5) * 0.15 - 0.08;
+            a.armR = Math.sin(a.bob * 1.5 + Math.PI) * 0.15 + 0.08;
+
+            if (dist > 8) {
+              const spd = Math.min(dist * 0.018, 1.8);
+              a.x += (dx / dist) * spd;
+              a.y += (dy / dist) * spd;
+              a.targetRot = Math.atan2(dy, dx) + Math.PI / 2;
+            } else {
+              a.state = a.target.broken
+                ? "repairing"
+                : a.target.built
+                  ? "idle"
+                  : "building";
+              a.workTime = 0;
+            }
+            break;
+
+          case "building":
+            if (!a.target || a.target.built) {
+              a.state = "idle";
+              a.target = null;
+              break;
+            }
+
+            const ti = a.target.ti;
+            const bx = a.target.x + ti.w / 2 + 12;
+            const by = a.target.y;
+            a.x += (bx - a.x) * 0.04;
+            a.y += (by - a.y) * 0.04;
+            a.targetRot = Math.PI / 2;
+
+            a.workTime += dt;
+            a.target.progress = a.workTime / a.target.buildTime;
+
+            const phase = a.target.progress;
+            if (phase < 0.2) {
+              a.tool = "grabber";
+              a.armL = -0.5 + Math.sin(a.toolAnim * 0.4) * 0.08;
+            } else if (phase < 0.7) {
+              a.tool = "welder";
+              a.armL = -0.4 + Math.sin(a.toolAnim * 4) * 0.02;
+              if (Math.random() < 0.04)
+                weldEffect(a.x - 8, a.y, a.nation.accent);
+            } else {
+              a.tool = "drill";
+              a.armL = -0.4 + Math.sin(a.toolAnim * 6) * 0.015;
+            }
+            a.armR = 0.08;
+
+            if (a.workTime >= a.target.buildTime) {
+              a.target.built = true;
+              a.target.assignedTo = null;
+              station.building = station.building.filter(
+                (b) => b.id !== a.target.id,
+              );
+              successEffect(a.target.x, a.target.y, a.nation.accent);
+              Events.emit("module:built", {
+                module: a.target,
+                builder: a.id,
+              });
+              updateEra();
+
+              // Add window lights if life active
+              if (lifeActive && a.target.ti.win > 0) {
+                for (let i = 0; i < a.target.ti.win; i++) {
+                  life.lights.push({
+                    modId: a.target.id,
+                    idx: i,
+                    lit: Math.random() > 0.35,
+                    timer: Math.random() * 5000,
+                    rate: 4000 + Math.random() * 10000,
+                  });
+                }
+              }
+
+              a.target = null;
+              a.state = "idle";
+            }
+            break;
+
+          case "repairing":
+            if (!a.target || !a.target.broken) {
+              a.state = "idle";
+              if (a.target) a.target.assignedTo = null;
+              a.target = null;
+              break;
+            }
+
+            const rx = a.target.x + 15,
+              ry = a.target.y;
+            a.x += (rx - a.x) * 0.04;
+            a.y += (ry - a.y) * 0.04;
+
+            a.workTime += dt;
+            const repairTime = 3000;
+            a.target.hp = 0.3 + (a.workTime / repairTime) * 0.7;
+
+            if (a.workTime / repairTime < 0.35) {
+              a.tool = "scanner";
+              a.armL = -0.25;
+            } else {
+              a.tool = "welder";
+              a.armL = -0.4 + Math.sin(a.toolAnim * 4) * 0.02;
+              if (Math.random() < 0.03)
+                weldEffect(a.x - 8, a.y, a.nation.accent);
+            }
+            a.armR = 0.1;
+
+            if (a.workTime >= repairTime) {
+              a.target.broken = false;
+              a.target.hp = 1;
+              a.target.assignedTo = null;
+              successEffect(a.target.x, a.target.y, a.nation.accent);
+              Events.emit("module:repair", {
+                module: a.target,
+                builder: a.id,
+              });
+              a.target = null;
+              a.state = "idle";
+            }
+            break;
+        }
+
+        // Smooth rotation
+        let rd = a.targetRot - a.rot;
+        while (rd > Math.PI) rd -= Math.PI * 2;
+        while (rd < -Math.PI) rd += Math.PI * 2;
+        a.rot += rd * 0.05;
+      }
+
+      function weldEffect(x, y, col) {
+        particles.push({
+          x,
+          y,
+          vx: 0,
+          vy: 0,
+          life: 1,
+          size: 3,
+          type: "core",
+          col: C.weldWhite,
+        });
+        for (let i = 0; i < 2; i++) {
+          const a = Math.PI / 2 + (Math.random() - 0.5) * 0.6;
+          const s = Math.random() * 1.2 + 0.8;
+          particles.push({
+            x,
+            y,
+            vx: Math.cos(a) * s * 0.25,
+            vy: Math.sin(a) * s,
+            life: 1,
+            size: 1 + Math.random(),
+            type: "spark",
+            col: col || C.spark,
+            trail: [],
+          });
+        }
+      }
+
+      function successEffect(x, y, col) {
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const s = Math.random() * 0.8 + 0.5;
+          particles.push({
+            x,
+            y,
+            vx: Math.cos(a) * s,
+            vy: Math.sin(a) * s,
+            life: 1,
+            size: 2 + Math.random(),
+            type: "success",
+            col: col || C.success,
+          });
+        }
+      }
+
+      function updateParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.type === "spark") {
+            p.vy += 0.03;
+            p.trail?.push({ x: p.x, y: p.y });
+            if (p.trail?.length > 3) p.trail.shift();
+          }
+          p.life -= p.type === "core" ? 0.1 : 0.04;
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+      }
+
+      function updateCamera(dt) {
+        // Calculate auto-follow target (station bounds)
+        let minX = 0,
+          maxX = 0,
+          minY = 0,
+          maxY = 0;
+        station.modules.forEach((m) => {
+          const ti = modTypes[m.type];
+          minX = Math.min(minX, m.x - ti.w);
+          maxX = Math.max(maxX, m.x + ti.w);
+          minY = Math.min(minY, m.y - ti.h);
+          maxY = Math.max(maxY, m.y + ti.h);
+        });
+
+        const sw = maxX - minX,
+          sh = maxY - minY;
+        const tz = Math.min(
+          1,
+          Math.min(
+            (width * 0.7) / Math.max(sw, 150),
+            (height * 0.6) / Math.max(sh, 150),
+          ),
+        );
+        const autoZoom = Math.max(0.06, Math.min(1, tz));
+        const autoX = (minX + maxX) / 2;
+        const autoY = (minY + maxY) / 2;
+
+        if (userCamera.followingAstro) {
+          // Following an astronaut - center on them
+          const a = userCamera.followingAstro;
+          userCamera.x = a.x;
+          userCamera.y = a.y;
+
+          camera.x += (userCamera.x - camera.x) * 0.08;
+          camera.y += (userCamera.y - camera.y) * 0.08;
+          camera.zoom += (userCamera.zoom - camera.zoom) * 0.08;
+        } else if (userCamera.active) {
+          // User is controlling - use user camera values
+          camera.x += (userCamera.x - camera.x) * 0.15;
+          camera.y += (userCamera.y - camera.y) * 0.15;
+          camera.zoom += (userCamera.zoom - camera.zoom) * 0.15;
+
+          // Track inactivity (only when not panning)
+          if (!userCamera.isPanning) {
+            userCamera.inactivityTimer += dt;
+            if (userCamera.inactivityTimer > userCamera.inactivityTimeout) {
+              // Smoothly transition back to auto-follow
+              userCamera.active = false;
+            }
+          }
+        } else if (dirCamera.active) {
+          // Phase 1+: Director controls the camera when not userCamera and not
+          // following. Dir writes to dirCamera; we blend here. Phase 0 leaves
+          // dirCamera.active = false so this branch stays cold.
+          camera.x += (dirCamera.x - camera.x) * 0.06;
+          camera.y += (dirCamera.y - camera.y) * 0.06;
+          camera.zoom += (dirCamera.zoom - camera.zoom) * 0.04;
+          camera.yaw += (dirCamera.yaw - camera.yaw) * 0.05;
+          camera.pitch += (dirCamera.pitch - camera.pitch) * 0.05;
+          camera.roll += (dirCamera.roll - camera.roll) * 0.05;
+          camera.fov += (dirCamera.fov - camera.fov) * 0.05;
+          // Keep userCamera loosely synced so a handoff is smooth.
+          userCamera.x += (camera.x - userCamera.x) * 0.05;
+          userCamera.y += (camera.y - userCamera.y) * 0.05;
+          userCamera.zoom += (camera.zoom - userCamera.zoom) * 0.05;
+        } else {
+          // Auto-follow mode
+          camera.x += (autoX - camera.x) * 0.01;
+          camera.y += (autoY - camera.y) * 0.01;
+          camera.zoom += (autoZoom - camera.zoom) * 0.005;
+          // Ease 3D fields back to neutral when no director is active.
+          camera.yaw += (0 - camera.yaw) * 0.02;
+          camera.pitch += (0 - camera.pitch) * 0.02;
+          camera.roll += (0 - camera.roll) * 0.02;
+          camera.fov += (1.0 - camera.fov) * 0.02;
+
+          // Keep userCamera synced for smooth transition when user takes control
+          userCamera.x += (camera.x - userCamera.x) * 0.05;
+          userCamera.y += (camera.y - userCamera.y) * 0.05;
+          userCamera.zoom += (camera.zoom - userCamera.zoom) * 0.05;
+        }
+      }
+
+      function updateEra() {
+        const count = station.modules.filter((m) => m.built).length;
+        for (let i = eras.length - 1; i >= 0; i--) {
+          if (count >= eras[i].count && currentEra !== i) {
+            const from = currentEra;
+            currentEra = i;
+            eraEl.style.opacity = 0;
+            setTimeout(() => {
+              eraEl.textContent = eras[i].name;
+              eraEl.style.opacity = 1;
+            }, 400);
+            Events.emit("era:advance", {
+              from,
+              to: i,
+              name: eras[i].name,
+              count,
+            });
+            break;
+          }
+        }
+      }
+
+      // Breakdowns
+      let breakTimer = 25000 + Math.random() * 15000;
+      let breakElapsed = 0;
+
+      function triggerBreak() {
+        const targets = station.modules.filter(
+          (m) => m.built && m.type !== "zarya" && !m.broken,
+        );
+        if (targets.length < 12) return;
+        const m = targets[Math.floor(Math.random() * targets.length)];
+        m.broken = true;
+        m.hp = 0.3;
+        Events.emit("module:break", { module: m });
+        for (let i = 0; i < 5; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const s = Math.random() * 1 + 0.5;
+          particles.push({
+            x: m.x,
+            y: m.y,
+            vx: Math.cos(a) * s,
+            vy: Math.sin(a) * s,
+            life: 1,
+            size: 1.5 + Math.random(),
+            type: "spark",
+            col: C.sparkOrange,
+            trail: [],
+          });
+        }
+      }
+
+      // DRAWING
+      function drawBg() {
+        const g = ctx.createRadialGradient(
+          width / 2,
+          height + 80,
+          0,
+          width / 2,
+          height + 80,
+          height * 1.4,
+        );
+        g.addColorStop(0, C.bgSpace);
+        g.addColorStop(1, C.bgNebula);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      function drawStars() {
+        const parallax = [0.04, 0.1, 0.2];
+        stars.forEach((s) => {
+          s.twinkle += s.twinkleSpeed;
+          const p = parallax[s.layer];
+          let x = s.x - camera.x * p + width / 2;
+          let y = s.y - camera.y * p + height / 2;
+          x =
+            (((x % (width * 1.4)) + width * 1.4) % (width * 1.4)) - width * 0.2;
+          y =
+            (((y % (height * 1.4)) + height * 1.4) % (height * 1.4)) -
+            height * 0.2;
+
+          ctx.globalAlpha = 0.15 + Math.sin(s.twinkle) * 0.12;
+          ctx.fillStyle = s.color;
+          ctx.beginPath();
+          ctx.arc(
+            x,
+            y,
+            s.size * Math.max(0.35, camera.zoom * 0.7),
+            0,
+            Math.PI * 2,
+          );
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function drawEarth() {
+        const ea = orbit.angle;
+        dayNight = (Math.sin(orbit.angle * 2) + 1) / 2;
+
+        // Place Earth in world space well behind the station plane so
+        // camera yaw/pitch moves it relative to the station.
+        const wx = Math.sin(ea) * 320;
+        const wy = 800 + Math.cos(ea) * 40;
+        const wz = 260; // behind the station plane
+        const p = project(wx, wy, wz);
+
+        const r = orbit.earthRadius * p.scale;
+        const ex = p.sx;
+        const ey = p.sy;
+
+        // Atmo
+        ctx.save();
+        const ag = ctx.createRadialGradient(ex, ey, r * 0.96, ex, ey, r * 1.06);
+        ag.addColorStop(0, C.earthAtmo + "22");
+        ag.addColorStop(1, "transparent");
+        ctx.fillStyle = ag;
+        ctx.beginPath();
+        ctx.arc(ex, ey, r * 1.06, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Body
+        ctx.save();
+        const dc = lerpCol(C.earthDay, C.earthNight, 1 - dayNight);
+        const dcd = lerpCol(C.earthDayDark, C.earthNightDark, 1 - dayNight);
+        const eg = ctx.createRadialGradient(
+          ex - r * 0.25,
+          ey - r * 0.25,
+          0,
+          ex,
+          ey,
+          r,
+        );
+        eg.addColorStop(0, dc);
+        eg.addColorStop(1, dcd);
+        ctx.fillStyle = eg;
+        ctx.beginPath();
+        ctx.arc(ex, ey, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Terminator
+        ctx.save();
+        ctx.clip();
+        const tx = ex + Math.cos(orbit.angle * 2) * r * 0.55;
+        const ng = ctx.createLinearGradient(tx - r * 0.25, 0, tx + r * 0.25, 0);
+        ng.addColorStop(0, "transparent");
+        ng.addColorStop(0.5, C.earthNightDark + "60");
+        ng.addColorStop(1, C.earthNightDark + "AA");
+        ctx.fillStyle = ng;
+        ctx.fillRect(ex - r, ey - r, r * 2, r * 2);
+
+        // Cities
+        if (dayNight < 0.55) {
+          ctx.globalAlpha = (0.55 - dayNight) * 0.4;
+          ctx.fillStyle = C.earthCity;
+          for (let i = 0; i < 12; i++) {
+            const ca = i * 0.45 + orbit.angle;
+            const cx = ex + Math.cos(ca) * r * 0.28 + (tx - ex) * 0.35;
+            const cy = ey - r * 0.45 + Math.sin(i * 2.1) * r * 0.28;
+            if (cx > tx - 25) {
+              ctx.beginPath();
+              ctx.arc(cx, cy, 0.8 + Math.random() * 0.3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+        ctx.restore();
+        ctx.restore();
+      }
+
+      function drawStation() {
+        // Painter-sort the middle slab by projected depth so objects further
+        // from camera draw first. Insertion is cheap because the list is
+        // mostly sorted frame-over-frame.
+        const sorted = [...station.modules].sort(
+          (a, b) => a.y + (a.z || 0) * 4 - (b.y + (b.z || 0) * 4),
+        );
+        sorted.forEach((m) => {
+          if (!m.built && (!m.progress || m.progress === 0)) return;
+
+          const ti = m.ti;
+          const p = project(m.x, m.y, m.z || 0);
+          ctx.save();
+          ctx.translate(p.sx, p.sy);
+          ctx.scale(p.scale, p.scale);
+          if (m.rot) ctx.rotate(m.rot);
+
+          const prog = m.progress || 1;
+          if (!m.built && prog > 0) {
+            ctx.strokeStyle = C.construction;
+            ctx.lineWidth = 0.8;
+            ctx.setLineDash([2, 2]);
+            ctx.globalAlpha = 0.3;
+            ctx.strokeRect(-ti.w / 2 - 2, -ti.h / 2 - 2, ti.w + 4, ti.h + 4);
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 0.25 + prog * 0.75;
+          }
+          if (m.broken) ctx.globalAlpha = 0.35 + m.hp * 0.65;
+
+          drawModule(m, ti, prog);
+          ctx.restore();
+        });
+
+        // Life elements — each item projected per-point.
+        if (lifeActive) {
+          // Smoke
+          life.smoke.forEach((s) => {
+            const p = project(s.x, s.y, 0);
+            ctx.globalAlpha = s.life * 0.2;
+            ctx.fillStyle = "#718096";
+            ctx.beginPath();
+            ctx.arc(p.sx, p.sy, s.size * p.scale, 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          // Ships
+          life.ships.forEach((s) => {
+            const p = project(s.x, s.y, 0);
+            ctx.save();
+            ctx.translate(p.sx, p.sy);
+            ctx.scale(p.scale, p.scale);
+            ctx.rotate(s.rot);
+            ctx.fillStyle = C.shipBody;
+            ctx.beginPath();
+            ctx.moveTo(s.size, 0);
+            ctx.lineTo(-s.size * 0.5, -s.size * 0.35);
+            ctx.lineTo(-s.size * 0.3, 0);
+            ctx.lineTo(-s.size * 0.5, s.size * 0.35);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = C.shipAccent;
+            ctx.fillRect(
+              -s.size * 0.2,
+              -s.size * 0.12,
+              s.size * 0.35,
+              s.size * 0.24,
+            );
+            if (s.state !== "docked") {
+              ctx.fillStyle = C.exhaust;
+              ctx.globalAlpha = 0.5 + Math.random() * 0.3;
+              ctx.beginPath();
+              ctx.moveTo(-s.size * 0.5, 0);
+              ctx.lineTo(-s.size - Math.random() * 4, -s.size * 0.12);
+              ctx.lineTo(-s.size - Math.random() * 4, s.size * 0.12);
+              ctx.closePath();
+              ctx.fill();
+            }
+            ctx.restore();
+          });
+
+          // Drones
+          life.drones.forEach((d) => {
+            const p = project(d.x, d.y, 0);
+            ctx.save();
+            ctx.translate(p.sx, p.sy);
+            ctx.scale(p.scale, p.scale);
+            ctx.rotate(d.rot);
+            ctx.fillStyle = C.droneBody;
+            ctx.fillRect(-3, -2, 6, 4);
+            ctx.fillStyle = C.shipAccent;
+            ctx.fillRect(-4.5, -0.8, 1.5, 1.6);
+            ctx.fillRect(3, -0.8, 1.5, 1.6);
+            if (Math.sin(Date.now() * 0.008 + d.x) > 0) {
+              ctx.fillStyle = "#FF6B6B";
+              ctx.beginPath();
+              ctx.arc(0, 0, 0.8, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.restore();
+          });
+
+          // Shuttles
+          ctx.globalAlpha = 0.6;
+          life.shuttles.forEach((s) => {
+            if (s.cx === undefined) return;
+            const p = project(s.cx, s.cy, 0);
+            ctx.fillStyle = C.shuttleGlow;
+            ctx.beginPath();
+            ctx.arc(p.sx, p.sy, 1.5 * p.scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 0.25;
+            ctx.beginPath();
+            ctx.arc(p.sx, p.sy, 3 * p.scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 0.6;
+          });
+        }
+
+        // Particles (projected per-point)
+        ctx.globalAlpha = 1;
+        particles.forEach((p) => {
+          const pr = project(p.x, p.y, 0);
+          ctx.globalAlpha = p.life * 0.65;
+          ctx.fillStyle = p.col;
+          if (p.type === "core") {
+            ctx.fillStyle = C.weldWhite;
+            ctx.beginPath();
+            ctx.arc(pr.sx, pr.sy, p.size * 0.4 * pr.scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = p.life * 0.25;
+            ctx.fillStyle = C.weldBlue;
+            ctx.beginPath();
+            ctx.arc(pr.sx, pr.sy, p.size * pr.scale, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (p.type === "spark" && p.trail) {
+            if (p.trail.length > 0) {
+              ctx.strokeStyle = p.col;
+              ctx.lineWidth = 0.8;
+              ctx.globalAlpha = p.life * 0.25;
+              ctx.beginPath();
+              const pt0 = project(p.trail[0].x, p.trail[0].y, 0);
+              ctx.moveTo(pt0.sx, pt0.sy);
+              p.trail.forEach((pt) => {
+                const q = project(pt.x, pt.y, 0);
+                ctx.lineTo(q.sx, q.sy);
+              });
+              ctx.lineTo(pr.sx, pr.sy);
+              ctx.stroke();
+            }
+            ctx.globalAlpha = p.life;
+            ctx.beginPath();
+            ctx.arc(pr.sx, pr.sy, p.size * pr.scale, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.beginPath();
+            ctx.arc(pr.sx, pr.sy, p.size * pr.scale, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+
+        // Tethers (projected endpoints)
+        astronauts.forEach((a) => {
+          if (!a.target) return;
+          const tp = project(a.target.x, a.target.y, a.target.z || 0);
+          const ap = project(a.x, a.y, 0);
+          ctx.strokeStyle = a.nation.accent;
+          ctx.lineWidth = 0.8;
+          ctx.globalAlpha = 0.25;
+          ctx.setLineDash([2.5, 2.5]);
+          ctx.beginPath();
+          ctx.moveTo(tp.sx, tp.sy);
+          const mx = (tp.sx + ap.sx) / 2;
+          const my = (tp.sy + ap.sy) / 2 + 8 * ap.scale;
+          ctx.quadraticCurveTo(mx, my, ap.sx, ap.sy);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        });
+
+        // Astronauts — sort by projected depth (same y proxy plus z).
+        ctx.globalAlpha = 1;
+        [...astronauts].sort((a, b) => a.y - b.y).forEach((a) => drawAstro(a));
+      }
+
+      function drawModule(m, ti, prog) {
+        const w = ti.w * Math.min(1, prog * 1.25);
+        const h = ti.h;
+        const cat = ti.cat;
+
+        // Get lights for this module
+        const lights = lifeActive
+          ? life.lights.filter((l) => l.modId === m.id)
+          : [];
+
+        if (cat === "solar") {
+          ctx.fillStyle = C.panelFrame;
+          ctx.fillRect(-w / 2, -h / 2, w, h);
+          if (prog > 0.2) {
+            ctx.fillStyle = m.broken ? shiftCol(C.panelBlue, -18) : C.panelBlue;
+            ctx.fillRect(-w / 2 + 1.5, -h / 2 + 2.5, w - 3, (h - 8) / 2);
+            ctx.fillRect(-w / 2 + 1.5, 2.5, w - 3, (h - 8) / 2);
+          }
+        } else if (cat === "radiator") {
+          ctx.fillStyle = C.radiator;
+          ctx.globalAlpha *= 0.75;
+          rRect(-w / 2, -h / 2, w, h, 1.5);
+        } else if (cat === "truss") {
+          ctx.fillStyle = C.issBodyDark;
+          ctx.fillRect(-w / 2, -h / 2, w, h);
+          ctx.fillStyle = C.issBody;
+          for (let x = -w / 2 + 2; x < w / 2 - 2; x += 7)
+            ctx.fillRect(x, -h / 2 - 0.5, 1.5, h + 1);
+        } else if (cat === "cupola") {
+          ctx.fillStyle = C.issBody;
+          ctx.beginPath();
+          ctx.arc(0, 0, w / 2, 0, Math.PI * 2);
+          ctx.fill();
+          if (prog > 0.5) {
+            for (let i = 0; i < 6; i++) {
+              const a = (i / 6) * Math.PI * 2;
+              ctx.fillStyle = lights[i]?.lit ? C.windowLit : C.window;
+              ctx.beginPath();
+              ctx.arc(
+                Math.cos(a) * w * 0.28,
+                Math.sin(a) * w * 0.28,
+                1.5,
+                0,
+                Math.PI * 2,
+              );
+              ctx.fill();
+            }
+          }
+        } else if (cat === "greenhouse") {
+          ctx.fillStyle = C.issBody;
+          rRect(-w / 2, -h / 2, w, h, 3);
+          if (prog > 0.25) {
+            const glow = lifeActive
+              ? 0.25 + Math.sin(Date.now() * 0.0008 + m.id) * 0.08
+              : 0.2;
+            ctx.fillStyle = C.greenhouse;
+            ctx.globalAlpha *= glow + 0.35;
+            rRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, 2);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = C.greenhouseGlow;
+            const cols = Math.min(4, ti.win);
+            for (let i = 0; i < cols; i++) {
+              const wx = -w / 2 + 4 + i * ((w - 8) / cols);
+              rRect(wx, -h / 2 + 3, (w - 10) / cols, h - 6, 1);
+            }
+          }
+        } else if (cat === "industrial") {
+          ctx.fillStyle = C.industrial;
+          rRect(-w / 2, -h / 2, w, h, 2.5);
+          ctx.fillStyle = C.issBodyDark;
+          rRect(-w / 2 + 2.5, -h / 2 + 2.5, w * 0.28, h - 5, 1.5);
+          if (prog > 0.45) {
+            ctx.fillStyle = "#FF6B6B";
+            ctx.fillRect(w / 2 - 8, -h / 2 + 4, 4, 4);
+          }
+        } else if (cat === "ring" || cat === "spoke") {
+          ctx.fillStyle = C.habRing;
+          rRect(-w / 2, -h / 2, w, h, cat === "ring" ? 3.5 : 1.5);
+          if (cat === "ring" && prog > 0.45 && ti.win) {
+            for (let i = 0; i < ti.win; i++) {
+              ctx.fillStyle = lights[i]?.lit ? C.windowLit : C.window;
+              const wx = -w / 2 + 4 + i * ((w - 8) / ti.win);
+              ctx.beginPath();
+              ctx.arc(wx + 1.5, 0, 1.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        } else if (cat === "monument") {
+          ctx.fillStyle = C.issBody;
+          rRect(-w / 2, -h / 2, w, h, 5);
+          ctx.fillStyle = C.issBodyDark;
+          rRect(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8, 3);
+          if (prog > 0.5) {
+            for (let r = 0; r < 3; r++) {
+              for (let c = 0; c < 4; c++) {
+                const idx = r * 4 + c;
+                ctx.fillStyle = lights[idx]?.lit ? C.windowLit : C.windowWarm;
+                const wx = -w / 2 + 8 + c * ((w - 16) / 3);
+                const wy = -h / 2 + 10 + r * ((h - 20) / 2);
+                ctx.beginPath();
+                ctx.arc(wx, wy, 2, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          }
+        } else {
+          ctx.fillStyle = m.broken ? shiftCol(C.issBody, -12) : C.issBody;
+          rRect(-w / 2, -h / 2, w, h, 3.5);
+          ctx.fillStyle = C.issBodyDark;
+          rRect(-w / 2 + 2, -h / 2 + 2, w * 0.22, h - 4, 1.5);
+          if (prog > 0.5 && ti.win) {
+            for (let i = 0; i < Math.min(ti.win, 4); i++) {
+              ctx.fillStyle = m.broken
+                ? C.warning
+                : lights[i]?.lit
+                  ? C.windowLit
+                  : C.window;
+              const wx = w * 0.1 + i * (w * 0.2);
+              ctx.beginPath();
+              ctx.arc(wx - w / 2 + 8, 0, 1.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          if (
+            ["habitat", "lab", "medical", "commercial"].includes(cat) &&
+            prog > 0.65
+          ) {
+            ctx.fillStyle = cat === "medical" ? "#FC8181" : "#FF6B6B";
+            ctx.fillRect(-w / 2, h / 4, w, 1.5);
+          }
+        }
+
+        if (m.broken) {
+          ctx.fillStyle = C.warning;
+          ctx.globalAlpha = 0.35 + Math.sin(Date.now() * 0.005) * 0.18;
+          ctx.beginPath();
+          ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawAstro(a) {
+        const x = a.x;
+        const y = a.y + Math.sin(a.bob) * 0.8;
+        const n = a.nation;
+        const s = 0.4;
+        const p = project(x, y, a.z || 0);
+
+        // Draw follow indicator if this astronaut is being followed
+        if (userCamera.followingAstro === a) {
+          ctx.save();
+          ctx.translate(p.sx, p.sy);
+          ctx.scale(p.scale, p.scale);
+          ctx.strokeStyle = n.accent;
+          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.004) * 0.25;
+          ctx.beginPath();
+          ctx.arc(0, 0, 18, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        ctx.save();
+        ctx.translate(p.sx, p.sy);
+        ctx.scale(p.scale, p.scale);
+        ctx.rotate(a.rot);
+
+        // Jetpack
+        ctx.fillStyle = "#4A5568";
+        rRect(-10 * s, -5 * s, 3.5 * s, 14 * s, 1);
+        rRect(6.5 * s, -5 * s, 3.5 * s, 14 * s, 1);
+
+        // Body
+        ctx.fillStyle = n.suit;
+        rRect(-6 * s, -3 * s, 12 * s, 18 * s, 2.5);
+
+        // Stripe
+        ctx.fillStyle = n.accent;
+        rRect(-6 * s, 2.5 * s, 12 * s, 2 * s, 0);
+
+        // Shoulder patch
+        ctx.fillStyle = n.secondary;
+        ctx.fillRect(-6 * s, -3 * s, 2 * s, 2.5 * s);
+
+        // Arms
+        drawArm(-6 * s, 0, a.armL, s, true, n, a);
+        drawArm(6 * s, 0, a.armR, s, false, n, a);
+
+        // Legs
+        ctx.fillStyle = n.suit;
+        rRect(-4 * s, 13 * s, 3 * s, 7 * s, 1);
+        rRect(1 * s, 13 * s, 3 * s, 7 * s, 1);
+
+        // Boots
+        ctx.fillStyle = n.accent;
+        rRect(-4.5 * s, 18 * s, 3.5 * s, 3 * s, 1);
+        rRect(1 * s, 18 * s, 3.5 * s, 3 * s, 1);
+
+        // Helmet
+        ctx.fillStyle = n.suit;
+        ctx.beginPath();
+        ctx.arc(0, -8 * s, 7.5 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Visor
+        ctx.fillStyle = "#2D3748";
+        ctx.beginPath();
+        ctx.arc(0, -6 * s, 5 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Visor shine
+        ctx.fillStyle = n.accent;
+        ctx.globalAlpha = 0.25;
+        ctx.beginPath();
+        ctx.ellipse(-1.5 * s, -9 * s, 2.5 * s, 1.2 * s, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawArm(sx, sy, angle, s, isLeft, n, a) {
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(angle);
+
+        ctx.fillStyle = n.suit;
+        rRect(-2 * s, -1.5 * s, 7 * s, 3.5 * s, 1.2);
+
+        ctx.fillStyle = n.accent;
+        ctx.beginPath();
+        ctx.arc(6 * s, 0, 2 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (isLeft && a.tool !== "none") {
+          ctx.save();
+          ctx.translate(7.5 * s, 0);
+
+          switch (a.tool) {
+            case "welder":
+              ctx.fillStyle = "#A0AEC0";
+              rRect(0, -1.2 * s, 5 * s, 2.4 * s, 0.8);
+              ctx.fillStyle = n.accent;
+              rRect(-1.5 * s, -1.5 * s, 2.2 * s, 3 * s, 0.8);
+              ctx.fillStyle = C.weldBlue;
+              ctx.globalAlpha = 0.55 + Math.random() * 0.25;
+              ctx.beginPath();
+              ctx.arc(6 * s, 0, 1.2 * s, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+            case "drill":
+              ctx.fillStyle = n.accent;
+              rRect(-1 * s, -1.5 * s, 3 * s, 3 * s, 0.8);
+              ctx.fillStyle = "#A0AEC0";
+              ctx.beginPath();
+              ctx.moveTo(2.5 * s, 0);
+              ctx.lineTo(6.5 * s, -0.8 * s);
+              ctx.lineTo(6.5 * s, 0.8 * s);
+              ctx.closePath();
+              ctx.fill();
+              break;
+            case "grabber":
+              ctx.fillStyle = "#A0AEC0";
+              rRect(0, -0.8 * s, 4 * s, 1.6 * s, 0.6);
+              ctx.beginPath();
+              ctx.moveTo(4 * s, -1.2 * s);
+              ctx.lineTo(6 * s, -2.5 * s);
+              ctx.lineTo(6 * s, -0.4 * s);
+              ctx.closePath();
+              ctx.fill();
+              ctx.beginPath();
+              ctx.moveTo(4 * s, 1.2 * s);
+              ctx.lineTo(6 * s, 2.5 * s);
+              ctx.lineTo(6 * s, 0.4 * s);
+              ctx.closePath();
+              ctx.fill();
+              break;
+            case "scanner":
+              ctx.fillStyle = "#2D3748";
+              rRect(0, -2.5 * s, 5 * s, 5 * s, 1);
+              ctx.fillStyle = n.secondary;
+              ctx.globalAlpha = 0.45 + Math.sin(Date.now() * 0.003) * 0.18;
+              rRect(0.8 * s, -1.8 * s, 3.4 * s, 3.6 * s, 0.6);
+              break;
+          }
+          ctx.restore();
+        }
+
+        ctx.restore();
+      }
+
+      function drawUI() {
+        const built = station.modules.filter((m) => m.built).length;
+        const building = station.building.length;
+        const queued = station.queue.length;
+
+        let status = `Modules: ${built}${building > 0 ? ` | Building: ${building}` : ""} | Queued: ${queued}+`;
+        if (userCamera.followingAstro) {
+          status += ` | Following: ${userCamera.followingAstro.nation.name}`;
+        } else if (userCamera.active) {
+          status += ` | Manual view (${Math.round(userCamera.zoom * 100)}%)`;
+        }
+        uiEl.textContent = status;
+
+        if (lifeActive && population > 0) {
+          popEl.textContent = `Population: ${population.toLocaleString()}`;
+          popEl.style.opacity = 1;
+        }
+      }
+
+      // Utilities
+      function lerpCol(c1, c2, t) {
+        const r1 = parseInt(c1.slice(1, 3), 16),
+          g1 = parseInt(c1.slice(3, 5), 16),
+          b1 = parseInt(c1.slice(5, 7), 16);
+        const r2 = parseInt(c2.slice(1, 3), 16),
+          g2 = parseInt(c2.slice(3, 5), 16),
+          b2 = parseInt(c2.slice(5, 7), 16);
+        return `rgb(${Math.round(r1 + (r2 - r1) * t)},${Math.round(g1 + (g2 - g1) * t)},${Math.round(b1 + (b2 - b1) * t)})`;
+      }
+
+      function shiftCol(hex, amt) {
+        const r = Math.min(
+          255,
+          Math.max(0, parseInt(hex.slice(1, 3), 16) + amt),
+        );
+        const g = Math.min(
+          255,
+          Math.max(0, parseInt(hex.slice(3, 5), 16) + amt),
+        );
+        const b = Math.min(
+          255,
+          Math.max(0, parseInt(hex.slice(5, 7), 16) + amt),
+        );
+        return `rgb(${r},${g},${b})`;
+      }
+
+      function rRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Main loop
+      let lastTime = 0;
+
+      function loop(time) {
+        const dt = lastTime ? time - lastTime : 16;
+        lastTime = time;
+
+        // In conservatory mode, world-time scales with the Hour choice.
+        // Astronaut motion (updateAstro) stays on raw dt so builds feel right.
+        const scaled =
+          dt * (Mode.current === "conservatory" ? Mode.hourMultiplier : 1);
+
+        orbit.angle += orbit.speed * scaled;
+        updateCamera(dt);
+
+        // Phase 0 ticks — cheap, always on.
+        if (Mode.current !== "boot") {
+          EclipseDetector.tick();
+          Attention.tick(dt);
+          // Phase 1 director — writes to dirCamera; updateCamera blends it in.
+          Director.tick(dt);
+        }
+        // Score fades across all layers every frame (even during boot).
+        Score.tick(dt);
+
+        breakElapsed += scaled;
+        if (
+          breakElapsed >= breakTimer &&
+          station.modules.filter((m) => m.built).length > 15
+        ) {
+          triggerBreak();
+          breakElapsed = 0;
+          breakTimer = 30000 + Math.random() * 25000;
+        }
+
+        astronauts.forEach((a) => updateAstro(a, dt));
+        updateParticles();
+        updateLife(scaled);
+
+        drawBg();
+        Purpose.drawLineage();
+        drawStars();
+        drawEarth();
+        drawStation();
+        drawUI();
+
+        requestAnimationFrame(loop);
+      }
+
+      // ============ PHASE S — SCORE ENGINE ============
+      // 10 context-driven moods from ssi_tracks/, each with 2 versions for
+      // variability. Crossfading layer-based player. Boot's Lamplighter fades
+      // into run's SlowWeather; event moods layer over; Sustain replaces.
+      const Score = {
+        enabled: true,
+        masterVol: 0.35,
+        started: false,
+        fadeDefaultMs: 5000,
+        _runFirstModulePlayed: false,
+        _sustainFired: false,
+        _failedLoads: 0,
+
+        tracks: {
+          Lamplighter: ["Lamplighter.mp3", "Lamplighter (1).mp3"],
+          SlowWeather: ["Slow Weather.mp3", "Slow Weather (1).mp3"],
+          FirstKindling: ["First Kindling.mp3", "First Kindling (1).mp3"],
+          EdgeOfDay: ["The Edge of Day.mp3", "The Edge of Day (1).mp3"],
+          LongShadow: ["Long Shadow.mp3", "Long Shadow (1).mp3"],
+          BoughBend: ["Bough-Bend.mp3", "Bough-Bend (1).mp3"],
+          NamesBehindStars: [
+            "Written Behind the Stars.mp3",
+            "Written Behind the Stars(1).mp3",
+          ],
+          SmallFault: ["Small Fault.mp3", "Small Fault (1).mp3"],
+          Sustain: ["The Sustain.mp3", "The Sustain (1).mp3"],
+          ThresholdAgain: ["Threshold Again.mp3", "Threshold Again (1).mp3"],
+        },
+
+        // Per-mood runtime layer: { audio, curVol, tgtVol, fadeMs, loop, versionIdx }
+        layers: new Map(),
+        lastFireMs: new Map(),
+
+        init() {
+          // Wire context → moods.
+          Events.on("run:start", ({ mode }) => this.onRunStart(mode));
+          Events.on("run:end", () => this.onRunEnd());
+          Events.on("module:built", () => this.onModuleBuilt());
+          Events.on("module:break", () =>
+            this.fire("SmallFault", { rateMs: 60000, fadeMs: 3500 }),
+          );
+          Events.on("orbit:eclipse-start", () =>
+            this.fire("LongShadow", {
+              rateMs: 120000,
+              fadeMs: 4000,
+              dipOthersTo: 0.2,
+              loop: true,
+            }),
+          );
+          Events.on("orbit:eclipse-end", () => {
+            this.stop("LongShadow", 4000);
+            // Un-dip others back to nominal.
+            this.layers.forEach((l, m) => {
+              if (m !== "LongShadow" && l.tgtVol > 0 && l.tgtVol < 0.5) {
+                l.tgtVol = 1;
+              }
+            });
+          });
+          Events.on("era:advance", () =>
+            this.fire("EdgeOfDay", { rateMs: 180000, fadeMs: 5000 }),
+          );
+
+          // Mute toggle.
+          const t = document.getElementById("score-toggle");
+          if (t) {
+            t.addEventListener("click", () => this.toggleMute());
+            this.updateToggleEl();
+          }
+          // Any gesture on the boot screen unlocks audio and starts Lamplighter.
+          const unlock = () => {
+            if (this.started) return;
+            this.started = true;
+            this.play("Lamplighter", { loop: true, fadeMs: 6000 });
+            this.showToggle();
+          };
+          document
+            .querySelectorAll(".mode-btn")
+            .forEach((b) =>
+              b.addEventListener("click", unlock, { once: true }),
+            );
+          // Also allow unlocking on signature-draw or option picks.
+          document.addEventListener("pointerdown", unlock, { once: true });
+        },
+
+        showToggle() {
+          const t = document.getElementById("score-toggle");
+          if (t) t.classList.add("visible");
+        },
+
+        updateToggleEl() {
+          const t = document.getElementById("score-toggle");
+          if (!t) return;
+          t.classList.toggle("muted", !this.enabled);
+        },
+
+        toggleMute() {
+          this.enabled = !this.enabled;
+          this.updateToggleEl();
+          if (!this.enabled) {
+            this.layers.forEach((l) => {
+              try {
+                l.audio.volume = 0;
+                l.audio.pause();
+              } catch (_) {}
+            });
+          } else {
+            // Resume whichever layers have nonzero target vol.
+            this.layers.forEach((l) => {
+              if (l.tgtVol > 0) {
+                try {
+                  l.audio.play();
+                } catch (_) {}
+              }
+            });
+          }
+        },
+
+        pickVersionIdx(mood, preferAlternate) {
+          const prev = this.layers.get(mood)?.versionIdx;
+          if (preferAlternate && prev !== undefined) return prev === 0 ? 1 : 0;
+          return Math.floor(Math.random() * this.tracks[mood].length);
+        },
+
+        ensureLayer(mood, versionIdx) {
+          let layer = this.layers.get(mood);
+          if (
+            !layer ||
+            (versionIdx !== undefined && layer.versionIdx !== versionIdx)
+          ) {
+            // Tear down old if version differs.
+            if (layer) {
+              try {
+                layer.audio.pause();
+              } catch (_) {}
+            }
+            const idx =
+              versionIdx !== undefined
+                ? versionIdx
+                : this.pickVersionIdx(mood, false);
+            const file = this.tracks[mood][idx];
+            const url = "ssi_tracks/" + encodeURI(file);
+            const audio = new Audio(url);
+            audio.preload = "auto";
+            audio.volume = 0;
+            audio.loop = false;
+            audio.addEventListener("error", () => {
+              this._failedLoads++;
+              if (typeof console !== "undefined")
+                console.warn("Score failed to load", url);
+            });
+            layer = {
+              audio,
+              curVol: 0,
+              tgtVol: 0,
+              fadeMs: this.fadeDefaultMs,
+              loop: true,
+              versionIdx: idx,
+              mood,
+            };
+            this.layers.set(mood, layer);
+          }
+          return layer;
+        },
+
+        play(mood, opts = {}) {
+          if (!this.tracks[mood]) return;
+          const {
+            volume = 1.0,
+            loop = true,
+            fadeMs = this.fadeDefaultMs,
+            forceAlternate = false,
+          } = opts;
+          // Alternate version on replay to give variability.
+          const versionIdx = forceAlternate
+            ? this.pickVersionIdx(mood, true)
+            : undefined;
+          const layer = this.ensureLayer(mood, versionIdx);
+          if (!layer) return;
+          layer.loop = loop;
+          layer.audio.loop = loop;
+          layer.tgtVol = volume;
+          layer.fadeMs = fadeMs;
+          try {
+            if (layer.audio.paused && this.enabled) {
+              if (layer.audio.currentTime > 0 && !loop)
+                layer.audio.currentTime = 0;
+              const p = layer.audio.play();
+              if (p && typeof p.catch === "function") p.catch(() => {});
+            }
+          } catch (_) {}
+        },
+
+        stop(mood, fadeMs = this.fadeDefaultMs) {
+          const layer = this.layers.get(mood);
+          if (!layer) return;
+          layer.tgtVol = 0;
+          layer.fadeMs = fadeMs;
+        },
+
+        fire(
+          mood,
+          {
+            rateMs = 60000,
+            fadeMs = 4000,
+            dipOthersTo = 0,
+            loop = false,
+            forceAlternate = true,
+          } = {},
+        ) {
+          if (!this.tracks[mood]) return;
+          const now = performance.now();
+          const last = this.lastFireMs.get(mood) || 0;
+          if (now - last < rateMs) return;
+          this.lastFireMs.set(mood, now);
+          this.play(mood, { loop, fadeMs, forceAlternate });
+          // Auto-stop when one-shot ends.
+          const layer = this.layers.get(mood);
+          if (layer && !loop) {
+            layer.audio.onended = () => this.stop(mood, 1500);
+          }
+          if (dipOthersTo > 0) {
+            this.layers.forEach((l, m) => {
+              if (m !== mood && l.tgtVol > dipOthersTo) l.tgtVol = dipOthersTo;
+            });
+          }
+        },
+
+        tick(dt) {
+          if (!this.started) return;
+          // Layer fades.
+          this.layers.forEach((l) => {
+            const span = Math.max(50, l.fadeMs);
+            const step = Math.min(1, dt / span);
+            l.curVol += (l.tgtVol - l.curVol) * step * 2;
+            if (Math.abs(l.curVol - l.tgtVol) < 0.002) l.curVol = l.tgtVol;
+            const effective = this.enabled
+              ? Math.max(0, Math.min(1, l.curVol * this.masterVol))
+              : 0;
+            try {
+              l.audio.volume = effective;
+            } catch (_) {}
+            if (l.curVol < 0.002 && l.tgtVol < 0.002 && !l.audio.paused) {
+              try {
+                l.audio.pause();
+              } catch (_) {}
+            }
+          });
+
+          // Auto Sustain when attention has been sustained for ≥10 min.
+          if (Mode.current !== "boot") {
+            if (Attention.sustainedMs >= 600000 && !this._sustainFired) {
+              this._sustainFired = true;
+              this.play("Sustain", { loop: true, fadeMs: 30000 });
+              this.stop("SlowWeather", 30000);
+            } else if (Attention.sustainedMs < 60000 && this._sustainFired) {
+              this._sustainFired = false;
+              this.stop("Sustain", 10000);
+              this.play("SlowWeather", { loop: true, fadeMs: 10000 });
+            }
+          }
+        },
+
+        onRunStart(mode) {
+          this._runFirstModulePlayed = false;
+          this._sustainFired = false;
+          // ThresholdAgain for returning players with a prior save ≥10 min old.
+          if (
+            Keeper.record &&
+            Keeper.record.totalRunCount > 1 &&
+            Keeper.record.lastSeenMs
+          ) {
+            const age = Date.now() - Keeper.record.lastSeenMs;
+            if (age > 600000) {
+              // Longer fade if >30 days, per SCORE_PLAN §2.10.
+              const long = age > 30 * 24 * 3600 * 1000;
+              this.fire("ThresholdAgain", {
+                rateMs: 0,
+                fadeMs: long ? 8000 : 5000,
+                dipOthersTo: 0.25,
+                loop: false,
+              });
+            }
+          }
+          // Fade Lamplighter out, SlowWeather in.
+          this.stop("Lamplighter", 4000);
+          this.play("SlowWeather", { loop: true, fadeMs: 5000, volume: 0.9 });
+        },
+
+        onRunEnd() {
+          this.layers.forEach((l, m) => this.stop(m, 2000));
+        },
+
+        onModuleBuilt() {
+          if (this._runFirstModulePlayed) return;
+          if (Mode.current === "boot") return;
+          this._runFirstModulePlayed = true;
+          this.fire("FirstKindling", {
+            rateMs: 0,
+            fadeMs: 5000,
+            dipOthersTo: 0.6,
+            loop: false,
+          });
+        },
+      };
+
+      // ============ PHASE 2 — PURPOSE MVP ============
+      // Lighthouse-keeper mechanics: run id, keep-tiles, lineage, boot gallery.
+      const Purpose = {
+        idEl: null,
+        edgeEl: null,
+        galleryEl: null,
+        galleryLabel: null,
+        _edgeTimer: null,
+
+        init() {
+          this.idEl = document.getElementById("run-id");
+          this.edgeEl = document.getElementById("edge-breath");
+          this.galleryEl = document.getElementById("boot-gallery");
+          this.galleryLabel = document.getElementById("boot-gallery-label");
+
+          // Keybinds: `*` / `K` = keep a moment. `~` will open the keeper log
+          // in Phase 4; reserved here.
+          window.addEventListener("keydown", (e) => {
+            if (
+              document.getElementById("boot").style.display === "none" ||
+              !document.getElementById("boot").style.display
+            ) {
+              const bootVisible = !document
+                .getElementById("boot")
+                .classList.contains("fading");
+              if (bootVisible && Mode.current === "boot") return;
+            }
+            if (Mode.current === "boot") return;
+            if (e.key === "*" || e.key === "k" || e.key === "K") {
+              e.preventDefault();
+              this.saveKeep();
+            }
+          });
+
+          // Click-to-copy on the run id.
+          if (this.idEl) {
+            this.idEl.addEventListener("click", () => this.copyRunLink());
+          }
+
+          // Refresh id display each time a run starts/ends.
+          Events.on("run:start", ({ id }) => {
+            if (this.idEl) {
+              this.idEl.textContent = id || "";
+              this.idEl.classList.add("visible");
+            }
+          });
+          Events.on("run:end", () => {
+            if (this.idEl) this.idEl.classList.remove("visible");
+          });
+
+          // Populate boot gallery from Keeper record.
+          this.refreshGallery();
+        },
+
+        breath() {
+          if (!this.edgeEl) return;
+          this.edgeEl.classList.add("flash");
+          clearTimeout(this._edgeTimer);
+          this._edgeTimer = setTimeout(() => {
+            this.edgeEl.classList.remove("flash");
+          }, 300);
+        },
+
+        saveKeep() {
+          if (Mode.current === "boot") return;
+          let thumb = null;
+          try {
+            // Cheap downscale: render to a small offscreen canvas.
+            const ts = document.createElement("canvas");
+            ts.width = 160;
+            ts.height = 100;
+            const tctx = ts.getContext("2d");
+            tctx.drawImage(canvas, 0, 0, 160, 100);
+            thumb = ts.toDataURL("image/jpeg", 0.6);
+          } catch (_) {
+            return;
+          }
+          const entry = {
+            ts: Date.now(),
+            id: Genome.id(),
+            mode: Mode.current,
+            decisions:
+              Mode.current === "conservatory"
+                ? { ...Conservatory.decisions }
+                : { mode: "watch" },
+            thumbnail: thumb,
+          };
+          Keeper.record.keeps.push(entry);
+          while (Keeper.record.keeps.length > 60) Keeper.record.keeps.shift();
+          Keeper.save();
+          this.breath();
+          // First keep of the install is its own mark (Phase 4 adds the rest).
+          Keeper.mark("firstKeep");
+        },
+
+        refreshGallery() {
+          if (!this.galleryEl) return;
+          const keeps = (Keeper.record && Keeper.record.keeps) || [];
+          this.galleryEl.innerHTML = "";
+          const shown = keeps.slice(-12).reverse();
+          shown.forEach((k) => {
+            const tile = document.createElement("div");
+            tile.className = "keep";
+            tile.style.backgroundImage = `url(${k.thumbnail})`;
+            tile.title = new Date(k.ts).toLocaleDateString();
+            tile.addEventListener("click", () => this.replayKeep(k));
+            this.galleryEl.appendChild(tile);
+          });
+          if (shown.length > 0) this.galleryLabel.classList.add("visible");
+          else this.galleryLabel.classList.remove("visible");
+        },
+
+        replayKeep(k) {
+          if (!k || !k.decisions) return;
+          if (k.decisions.mode === "watch") {
+            BootScreen.startWatch();
+            return;
+          }
+          // Wire selections into BootScreen then start.
+          BootScreen.selected.seed = k.decisions.seed;
+          BootScreen.selected.question = k.decisions.question;
+          BootScreen.selected.hour = k.decisions.hour || "River";
+          BootScreen.selected.signature = k.decisions.signature || [];
+          BootScreen.startConservatory();
+        },
+
+        copyRunLink() {
+          const link = this.shareLink();
+          try {
+            navigator.clipboard.writeText(link);
+            this.idEl.classList.add("copied");
+            setTimeout(() => this.idEl.classList.remove("copied"), 800);
+          } catch (_) {}
+        },
+
+        shareLink() {
+          const id = Genome.id();
+          const d =
+            Mode.current === "conservatory"
+              ? Conservatory.decisions
+              : { seed: "WATCH", question: "WATCH", hour: "River" };
+          const params = new URLSearchParams({
+            run: id,
+            seed: d.seed || "",
+            q: d.question || "",
+            h: d.hour || "River",
+          });
+          return `${location.origin}${location.pathname}?${params.toString()}`;
+        },
+
+        // Called from run:end: saves a downscaled snapshot for lineage.
+        captureLineage() {
+          try {
+            const ts = document.createElement("canvas");
+            ts.width = 320;
+            ts.height = 200;
+            const tctx = ts.getContext("2d");
+            tctx.drawImage(canvas, 0, 0, 320, 200);
+            Keeper.record.lastRunFinalSnapshot = ts.toDataURL(
+              "image/jpeg",
+              0.5,
+            );
+            Keeper.record.lastSeenMs = Date.now();
+            Keeper.save();
+          } catch (_) {}
+        },
+
+        // Draws last-run ghost behind the stars/station.
+        _lineageImg: null,
+        _lineageLoaded: false,
+        drawLineage() {
+          if (Mode.current === "boot") return;
+          const snap = Keeper.record && Keeper.record.lastRunFinalSnapshot;
+          if (!snap) return;
+          if (!this._lineageImg) {
+            this._lineageImg = new Image();
+            this._lineageImg.onload = () => (this._lineageLoaded = true);
+            this._lineageImg.src = snap;
+          }
+          if (!this._lineageLoaded) return;
+          const daysSince =
+            (Date.now() - (Keeper.record.lastSeenMs || Date.now())) /
+            (1000 * 60 * 60 * 24);
+          const alpha = daysSince > 30 ? 0.02 : 0.08;
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.drawImage(this._lineageImg, 0, 0, width, height);
+          ctx.restore();
+        },
+      };
+
+      // ============ BOOT SCREEN WIRING ============
+      const BootScreen = {
+        el: null,
+        modeScreen: null,
+        conservatoryScreen: null,
+        beginBtn: null,
+        sigCanvas: null,
+        sigCtx: null,
+        sigStroke: [],
+        sigDrawing: false,
+
+        selected: {
+          seed: null,
+          question: null,
+          hour: "River",
+          signature: [],
+        },
+
+        init() {
+          this.el = document.getElementById("boot");
+          this.modeScreen = document.getElementById("boot-modes");
+          this.conservatoryScreen =
+            document.getElementById("boot-conservatory");
+          this.beginBtn = document.getElementById("begin-btn");
+          this.sigCanvas = document.getElementById("sig-canvas");
+          if (this.sigCanvas) this.sigCtx = this.sigCanvas.getContext("2d");
+
+          // Mode selection buttons
+          document.querySelectorAll("#boot-modes .mode-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const m = btn.dataset.mode;
+              if (m === "watch") this.startWatch();
+              else if (m === "conservatory") this.showConservatory();
+              else if (m === "return") this.resumeLastRun();
+            });
+          });
+
+          // Back button
+          const back = document.getElementById("boot-back");
+          if (back) back.addEventListener("click", () => this.showModeSelect());
+
+          // Decision option buttons
+          ["opt-seed", "opt-question", "opt-hour"].forEach((groupId) => {
+            const group = document.getElementById(groupId);
+            if (!group) return;
+            group.querySelectorAll(".opt").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                group
+                  .querySelectorAll(".opt")
+                  .forEach((b) => b.classList.remove("selected"));
+                btn.classList.add("selected");
+                const key = groupId.split("-")[1];
+                this.selected[key] = btn.dataset.val;
+                this.refreshBegin();
+              });
+            });
+          });
+
+          // Signature canvas drawing
+          if (this.sigCanvas) {
+            const start = (e) => {
+              this.sigDrawing = true;
+              this.sigStroke = [];
+              this.sigCtx.clearRect(
+                0,
+                0,
+                this.sigCanvas.width,
+                this.sigCanvas.height,
+              );
+              this.sigCtx.strokeStyle = "rgba(255,255,255,0.85)";
+              this.sigCtx.lineWidth = 2;
+              this.sigCtx.lineCap = "round";
+              this.sigCtx.beginPath();
+              this.addSigPoint(e);
+            };
+            const move = (e) => {
+              if (!this.sigDrawing) return;
+              this.addSigPoint(e);
+            };
+            const end = () => {
+              this.sigDrawing = false;
+              this.selected.signature = this.simplifySignature(this.sigStroke);
+            };
+            this.sigCanvas.addEventListener("mousedown", start);
+            this.sigCanvas.addEventListener("mousemove", move);
+            window.addEventListener("mouseup", end);
+            this.sigCanvas.addEventListener("touchstart", (e) => {
+              e.preventDefault();
+              start(e.touches[0]);
+            });
+            this.sigCanvas.addEventListener("touchmove", (e) => {
+              e.preventDefault();
+              move(e.touches[0]);
+            });
+            this.sigCanvas.addEventListener("touchend", (e) => {
+              e.preventDefault();
+              end();
+            });
+          }
+
+          if (this.beginBtn)
+            this.beginBtn.addEventListener("click", () =>
+              this.startConservatory(),
+            );
+
+          // Check for saved run
+          try {
+            const saved = localStorage.getItem("orbital-dream.conservatory.v1");
+            if (saved) {
+              const ret = document.getElementById("boot-return");
+              if (ret) ret.style.display = "";
+            }
+          } catch (e) {}
+        },
+
+        addSigPoint(e) {
+          const rect = this.sigCanvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          if (this.sigStroke.length === 0) this.sigCtx.moveTo(x, y);
+          else this.sigCtx.lineTo(x, y);
+          this.sigCtx.stroke();
+          this.sigStroke.push([x, y]);
+        },
+
+        simplifySignature(stroke) {
+          if (!stroke.length) return [];
+          // Normalize to 0..1, resample to at most 32 points.
+          const w = this.sigCanvas.width,
+            h = this.sigCanvas.height;
+          const targetN = Math.min(32, Math.max(4, stroke.length));
+          const out = [];
+          const stride = (stroke.length - 1) / (targetN - 1);
+          for (let i = 0; i < targetN; i++) {
+            const p =
+              stroke[Math.min(stroke.length - 1, Math.round(i * stride))];
+            out.push([p[0] / w, p[1] / h]);
+          }
+          return out;
+        },
+
+        showConservatory() {
+          this.modeScreen.classList.remove("active");
+          this.conservatoryScreen.classList.add("active");
+          this.refreshBegin();
+        },
+
+        showModeSelect() {
+          this.conservatoryScreen.classList.remove("active");
+          this.modeScreen.classList.add("active");
+        },
+
+        refreshBegin() {
+          const ok = !!this.selected.seed && !!this.selected.question;
+          this.beginBtn.disabled = !ok;
+        },
+
+        fadeOut(cb) {
+          this.el.classList.add("fading");
+          setTimeout(() => {
+            this.el.style.display = "none";
+            if (cb) cb();
+          }, 1200);
+        },
+
+        startWatch() {
+          Mode.current = "watch";
+          // Watch mode's decisions are synthetic + fixed so its run id is stable.
+          Genome.build({
+            seed: "WATCH",
+            question: "WATCH",
+            hour: "River",
+            signature: [],
+          });
+          this.fadeOut(() => {
+            initStation();
+            Events.emit("run:start", { mode: "watch", id: Genome.id() });
+          });
+        },
+
+        startConservatory() {
+          if (!this.selected.seed || !this.selected.question) return;
+          Mode.current = "conservatory";
+          const decisions = {
+            seed: this.selected.seed,
+            question: this.selected.question,
+            hour: this.selected.hour || "River",
+            signature: this.selected.signature || [],
+          };
+          Genome.build(decisions);
+          this.fadeOut(() => {
+            Conservatory.start(decisions);
+            // Save decisions for resume
+            try {
+              localStorage.setItem(
+                "orbital-dream.conservatory.v1",
+                JSON.stringify({
+                  version: 1,
+                  startedAt: Date.now(),
+                  decisions: Conservatory.decisions,
+                }),
+              );
+            } catch (e) {}
+            // Show hour dial
+            this.updateHourDial();
+            const dial = document.getElementById("hour-dial");
+            if (dial) dial.classList.add("visible");
+            Events.emit("run:start", {
+              mode: "conservatory",
+              id: Genome.id(),
+              decisions,
+            });
+          });
+        },
+
+        resumeLastRun() {
+          try {
+            const saved = JSON.parse(
+              localStorage.getItem("orbital-dream.conservatory.v1") || "null",
+            );
+            if (!saved) return this.startWatch();
+            this.selected.seed = saved.decisions.seed;
+            this.selected.question = saved.decisions.question;
+            this.selected.hour = saved.decisions.hour;
+            this.selected.signature = saved.decisions.signature || [];
+            this.startConservatory();
+          } catch (e) {
+            this.startWatch();
+          }
+        },
+
+        updateHourDial() {
+          const dial = document.getElementById("hour-dial");
+          if (!dial) return;
+          const glyph = document.getElementById("hour-glyph");
+          const label = document.getElementById("hour-label");
+          const map = { Lichen: "\u2022", River: "\u223F", Flame: "\u25B2" };
+          if (glyph)
+            glyph.textContent = map[Conservatory.decisions.hour] || "~";
+          if (label) label.textContent = Conservatory.decisions.hour;
+        },
+      };
+
+      // Hour dial cycles between the three tempos.
+      document.getElementById("hour-dial").addEventListener("click", () => {
+        if (Mode.current !== "conservatory") return;
+        const seq = ["Lichen", "River", "Flame"];
+        const cur = Conservatory.decisions.hour;
+        const next = seq[(seq.indexOf(cur) + 1) % seq.length];
+        Conservatory.decisions.hour = next;
+        Mode.hourMultiplier = Conservatory.hourToMultiplier(next);
+        BootScreen.updateHourDial();
+      });
+
+      // run:end on tab close — snapshot + totals + save.
+      window.addEventListener("beforeunload", () => {
+        if (Mode.current !== "boot") {
+          try {
+            Purpose.captureLineage();
+          } catch (_) {}
+        }
+        Events.emit("run:end", {
+          mode: Mode.current,
+          id: Mode.current === "boot" ? null : Genome.id(),
+          at: Date.now(),
+        });
+        try {
+          Keeper.record.totalFocusedMs =
+            (Keeper.record.totalFocusedMs || 0) +
+            (Attention.totalFocusedMs || 0);
+          Keeper.save();
+        } catch (_) {}
+      });
+
+      // Init
+      Keeper.init();
+      Purpose.init();
+      Director.init();
+      Score.init();
+      BootScreen.init();
+      requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>
