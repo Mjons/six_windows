@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+.env*.local
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+
+# Hosted externally (>100MB, exceeds GitHub limit)
+public/meows/meows.mp4
+
+# Local Claude Code permissions (user-machine specific)
+.claude/settings.local.json

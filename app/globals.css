@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --kodak-shadow: #050308;
+  --kodak-deep: #241416;
+  --kodak-terracotta: #7a382e;
+  --kodak-orange: #eb855c;
+  --kodak-gold: #ffd993;
+  --kodak-cream: #ffe9d9;
+}
+
+html,
+body {
+  background: var(--kodak-shadow);
+  color: var(--kodak-cream);
+}
+
+body {
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--kodak-terracotta);
+  color: var(--kodak-cream);
+}
+
+/* A very soft film grain overlay. Pinned to the whole viewport, pointer-events none. */
+.film-grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.6' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Reveal-on-scroll: starts hidden and 24px down, eases up when .is-visible */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 1100ms cubic-bezier(0.2, 0.6, 0.2, 1),
+    transform 1100ms cubic-bezier(0.2, 0.6, 0.2, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-slow {
+  transition-duration: 1600ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-slow {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .orbit-rotate,
+  .breathe {
+    animation: none !important;
+  }
+}
+
+/* Display-type utility — pushes Fraunces into its most expressive corner */
+.display-soft {
+  font-family: var(--font-fraunces), serif;
+  font-variation-settings:
+    "opsz" 144,
+    "SOFT" 100;
+  letter-spacing: -0.035em;
+}
+.display-crisp {
+  font-family: var(--font-fraunces), serif;
+  font-variation-settings:
+    "opsz" 144,
+    "SOFT" 30;
+  letter-spacing: -0.04em;
+}
+
+/* Monospace index label, like a monograph folio */
+.folio {
+  font-family: var(--font-jetbrains), monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--kodak-gold);
+}
+
+/* Window frame: the mullion sits inside, giving a sense of "looking through glass" */
+.window-frame {
+  position: relative;
+  overflow: hidden;
+  background: var(--kodak-deep);
+  box-shadow:
+    0 0 0 1px rgba(255, 217, 147, 0.12),
+    0 30px 80px -40px rgba(0, 0, 0, 0.9);
+}
+.window-frame::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(255, 233, 217, 0.08);
+  pointer-events: none;
+}
+.window-frame:hover::after {
+  border-color: rgba(255, 217, 147, 0.28);
+}
+.window-frame:hover {
+  transform: translateY(-4px);
+}
+.window-frame {
+  transition:
+    transform 700ms cubic-bezier(0.2, 0.6, 0.2, 1),
+    box-shadow 700ms cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* Very slow orbital rotation for Orrery poster */
+@keyframes orbit-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.orbit-rotate {
+  animation: orbit-rotate 80s linear infinite;
+  transform-origin: center;
+}
+.orbit-rotate-rev {
+  animation: orbit-rotate 140s linear infinite reverse;
+  transform-origin: center;
+}
+
+/* A breathing glow, used sparingly */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+.breathe {
+  animation: breathe 7s ease-in-out infinite;
+}
+
+/* Hairline, used across the site as separators */
+.hairline {
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 217, 147, 0.35),
+    transparent
+  );
+  height: 1px;
+}
