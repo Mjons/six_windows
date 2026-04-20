@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import OrreryEmbed from "@/components/OrreryEmbed";
 import { works } from "@/content/works";
 
 const work = works.find((w) => w.id === "orrery")!;
@@ -48,15 +49,7 @@ export default function Page() {
       {/* the piece — live mechanical solar system, iframed from its GitHub Pages host */}
       <section className="mt-20 flex justify-center">
         <figure className="w-full max-w-[1200px]">
-          <div className="window-frame relative w-full aspect-[16/10]">
-            <iframe
-              src="https://mjons.github.io/Orrery/"
-              title="Orrery — a mechanical solar system"
-              className="absolute inset-0 h-full w-full border-0"
-              loading="lazy"
-              allow="fullscreen; accelerometer; gyroscope"
-            />
-          </div>
+          <OrreryEmbed />
           <figcaption className="mt-5 folio text-cream/45">
             Interactive · let the gears turn.
           </figcaption>
