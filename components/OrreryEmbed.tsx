@@ -1,10 +1,18 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const ORRERY_URL = "https://mjons.github.io/Orrery/";
 
 export default function OrreryEmbed() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [isFs, setIsFs] = useState(false);
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    const mobile = window.matchMedia("(max-width: 768px)").matches;
+    setSrc(mobile ? `${ORRERY_URL}?objects=4k` : ORRERY_URL);
+  }, []);
 
   const enter = async () => {
     const el = wrapRef.current;
@@ -33,13 +41,15 @@ export default function OrreryEmbed() {
       ref={wrapRef}
       className="window-frame relative w-full aspect-[16/10] group bg-shadow"
     >
-      <iframe
-        src="https://mjons.github.io/Orrery/"
-        title="Orrery — a mechanical solar system"
-        className="absolute inset-0 h-full w-full border-0"
-        loading="lazy"
-        allow="fullscreen; accelerometer; gyroscope"
-      />
+      {src && (
+        <iframe
+          src={src}
+          title="Orrery — a mechanical solar system"
+          className="absolute inset-0 h-full w-full border-0"
+          loading="lazy"
+          allow="fullscreen; accelerometer; gyroscope"
+        />
+      )}
       <button
         type="button"
         onClick={isFs ? exit : enter}
