@@ -36,7 +36,7 @@ export default function Page() {
   return (
     <main className="relative">
       {/* ——————————————————————————————————————
-          Opening: the quiet index.
+          Opening: the index.
           Near silence — a folio mark, a name, a line of intent.
          —————————————————————————————————————— */}
       <section className="min-h-[92vh] px-6 md:px-16 pt-16 pb-40 flex flex-col">
@@ -71,7 +71,7 @@ export default function Page() {
           <RevealOnScroll delayMs={320} slow>
             <p className="mt-14 max-w-[36ch] text-cream/60 text-[1.02rem] leading-relaxed">
               A small monograph of art projects — simulations of stars, little
-              generators, quiet galleries.
+              generators, chill galleries.
             </p>
           </RevealOnScroll>
         </div>

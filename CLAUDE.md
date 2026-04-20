@@ -6,7 +6,7 @@ A showcase site for MJ's art projects. Each piece lives in its own "window" — 
 
 - **Beautiful, simple, unique.** Not a template. Not a dev portfolio. A gallery.
 - **The work is the hero.** Chrome recedes, art dominates.
-- **Fast, quiet, tactile.** Feels hand-made, not generated.
+- **Fast, chill, tactile.** Feels hand-made, not generated.
 
 ## Aesthetic direction
 
@@ -36,7 +36,7 @@ The word **window** is load-bearing — treat it literally. Each project is a fr
 
 ## Structure
 
-- **Landing** — a **quiet index that reveals on scroll.** MJ's name and a single line of intent sit in near-silence at the top. The 6 windows unveil one at a time as the visitor descends, each given room to breathe. No navbar bloat, no "view all" grid dump.
+- **Landing** — a **index that reveals on scroll.** MJ's name and a single line of intent sit in near-silence at the top. The 6 windows unveil one at a time as the visitor descends, each given room to breathe. No navbar bloat, no "view all" grid dump.
 - **Windows** — 6 pieces total, three archetypes:
   - **Cosmic simulations** — stars, galaxies; interactive canvas/WebGL
   - **Generative art generators** — interactive, parameterized

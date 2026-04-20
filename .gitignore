@@ -14,3 +14,9 @@ public/meows/meows.mp4
 
 # Local Claude Code permissions (user-machine specific)
 .claude/settings.local.json
+
+# Local-only utility script — not part of the site build
+scripts/optimize_images.py
+
+# Stray file created by Windows stderr redirects in bash (e.g. `2>NUL`)
+/nul

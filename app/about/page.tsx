@@ -26,9 +26,9 @@ export default function Page() {
           </p>
           <p>
             The work here is split between cosmic simulations, little generative
-            tools I've built for my own amusement, and the occasional quiet
-            gallery. Each piece was made for the pleasure of making it. If a
-            window catches you, that's the whole point.
+            tools I've built for my own amusement, and the occasional gallery.
+            Each piece was made for the pleasure of making it. If a window
+            catches you, that's the whole point.
           </p>
         </div>
 

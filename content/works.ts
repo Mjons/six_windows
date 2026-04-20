@@ -54,7 +54,7 @@ export const works: Work[] = [
     kind: "cosmic",
     caption: "A mechanical solar system, ticking in warm brass.",
     statement:
-      "Six rings, each keeping its own quiet time. The planets are not to scale — nothing ever is — but the gears are honest, and the light falls where it should.",
+      "Six rings, each keeping its own time. The planets are not to scale — nothing ever is — but the gears are honest, and the light falls where it should.",
     poster: "orrery",
     inset: "bleed",
     size: "lg",
@@ -101,7 +101,7 @@ export const works: Work[] = [
     year: "2025",
     kind: "generative",
     caption:
-      "An orbital colony that grows itself — modules accrete across eras, quiet as lichen.",
+      "An orbital colony that grows itself — modules accrete across eras, mesmerizing.",
     poster: "space-station-builder",
     inset: "center",
     size: "md",

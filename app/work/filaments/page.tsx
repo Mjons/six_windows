@@ -1,9 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import FilamentsEmbed from "@/components/FilamentsEmbed";
+import FilamentsGallery, {
+  type FilamentEntry,
+} from "@/components/FilamentsGallery";
 import { works } from "@/content/works";
+import manifest from "@/content/filaments-manifest.json";
 
 const work = works.find((w) => w.id === "filaments")!;
+
+const entries: FilamentEntry[] = (
+  manifest as Array<{ id: string; w: number; h: number; alt: string }>
+).map(({ id, w, h, alt }) => ({ id, w, h, alt }));
 
 export default function Page() {
   return (
@@ -55,6 +63,22 @@ export default function Page() {
           </figcaption>
         </figure>
       </section>
+
+      {entries.length > 0 && (
+        <>
+          <section className="mt-24 flex items-baseline gap-4 max-w-[1400px] mx-auto">
+            <span className="folio text-gold/70">the runs</span>
+            <span className="h-px flex-1 bg-cream/15" />
+            <span className="folio text-cream/45">
+              {String(entries.length).padStart(3, "0")}
+            </span>
+          </section>
+
+          <section className="mt-10">
+            <FilamentsGallery entries={entries} />
+          </section>
+        </>
+      )}
 
       {/* nav between windows */}
       <nav className="mt-32 border-t border-cream/10 pt-10 flex items-center justify-between font-mono text-[0.72rem] uppercase tracking-[0.28em]">
