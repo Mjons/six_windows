@@ -1,154 +1,153 @@
 import Link from "next/link";
+import PageChrome from "@/components/PageChrome";
+import Plate from "@/components/Plate";
 import RevealOnScroll from "@/components/RevealOnScroll";
-import Window from "@/components/Window";
 import { works } from "@/content/works";
 
-// Asymmetric placement per window — varies which column band each sits in.
-// 12-column grid at md+, single column below.
-const PLACEMENT: Record<string, { col: string; align: string }> = {
-  "minimalistic-meows": {
-    col: "md:col-start-2 md:col-end-8",
-    align: "md:justify-self-start",
-  },
-  orrery: {
-    col: "md:col-start-3 md:col-end-12",
-    align: "md:justify-self-center",
-  },
-  "hilma-ai-klint": {
-    col: "md:col-start-6 md:col-end-12",
-    align: "md:justify-self-end",
-  },
-  filaments: {
-    col: "md:col-start-1 md:col-end-10",
-    align: "md:justify-self-start",
-  },
-  "space-station-builder": {
-    col: "md:col-start-5 md:col-end-10",
-    align: "md:justify-self-center",
-  },
-  watchless: {
-    col: "md:col-start-7 md:col-end-12",
-    align: "md:justify-self-end",
-  },
+const KIND_LABEL: Record<string, string> = {
+  cosmic: "Cosmic",
+  generative: "Generative",
+  gallery: "Gallery",
 };
 
 export default function Page() {
   return (
     <main className="relative">
-      {/* ——————————————————————————————————————
-          Opening: the index.
-          Near silence — a folio mark, a name, a line of intent.
-         —————————————————————————————————————— */}
-      <section className="min-h-[92vh] px-6 md:px-16 pt-16 pb-40 flex flex-col">
-        <header className="flex items-center justify-between">
-          <span className="folio">Index · VI windows</span>
-          <nav className="flex gap-8 text-[0.72rem] uppercase tracking-[0.28em] font-mono text-cream/50">
-            <Link href="/about" className="hover:text-gold transition-colors">
-              About
-            </Link>
-            <Link href="/contact" className="hover:text-gold transition-colors">
-              Contact
-            </Link>
-          </nav>
-        </header>
+      <div className="vignette" aria-hidden />
+      <PageChrome />
 
-        <div className="mt-[22vh] md:mt-[30vh] max-w-[44rem]">
+      {/* ——————————————————————————————————————
+          Hero / Frontispiece
+         —————————————————————————————————————— */}
+      <section className="hero" id="hero">
+        <div className="hero-body">
+          <RevealOnScroll className="hero-meta">
+            <span className="folio label">MJ &nbsp;·&nbsp; MMXXV</span>
+            <span className="rule" />
+            <span
+              className="folio label"
+              style={{ color: "rgba(255,233,217,.45)" }}
+            >
+              Monograph · VI plates
+            </span>
+          </RevealOnScroll>
+
           <RevealOnScroll>
-            <p className="folio mb-8 text-gold/70">MJ &nbsp;·&nbsp; MMXXV</p>
-            <h1 className="display-crisp text-cream text-[clamp(3rem,9vw,7.5rem)] leading-[0.92]">
+            <h1 className="display-crisp hero-title">
               Six windows,
               <br />
               each onto{" "}
-              <em className="display-soft not-italic text-gold">
-                something
-              </em>{" "}
+              <em className="display-soft not-italic text-gold">something</em>
               <br />I found worth
               <br />
               keeping.
             </h1>
           </RevealOnScroll>
 
-          <RevealOnScroll delayMs={320} slow>
-            <p className="mt-14 max-w-[36ch] text-cream/60 text-[1.02rem] leading-relaxed">
-              A small monograph of art projects — simulations of stars, little
-              generators, chill galleries.
-            </p>
-          </RevealOnScroll>
-        </div>
+          <RevealOnScroll slow>
+            <div className="hero-sub">
+              <p>
+                A small monograph of art projects — simulations of stars, little
+                generators, chill galleries. Each piece was made for the
+                pleasure of making it; if a window catches you, that&apos;s the
+                whole point.
+              </p>
 
-        {/* faint scroll indicator, pinned to the bottom — no animation jitter */}
-        <div className="mt-auto pt-24 flex items-end justify-between">
-          <span className="folio text-cream/35">Scroll to enter</span>
-          <span className="folio text-cream/35">I → VI</span>
+              <div className="index-table" role="list">
+                {works.map((w) => (
+                  <a
+                    key={w.id}
+                    className="index-row"
+                    href={`#${w.id}`}
+                    role="listitem"
+                  >
+                    <span className="mono roman">{w.roman}</span>
+                    <span className="title">{w.title}</span>
+                    <span className="kind">
+                      {KIND_LABEL[w.kind]} ·{" "}
+                      {w.medium.split("·").slice(1).join("·").trim() ||
+                        w.medium}
+                    </span>
+                    <span className="year">{w.year}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </RevealOnScroll>
+
+          <div className="hero-foot">
+            <span className="folio" style={{ color: "rgba(255,233,217,.35)" }}>
+              Scroll to open the first window
+            </span>
+            <span className="caret" aria-hidden />
+            <span className="folio" style={{ color: "rgba(255,233,217,.35)" }}>
+              I → VI
+            </span>
+          </div>
         </div>
       </section>
 
       {/* ——————————————————————————————————————
-          The six windows. Each in its own breathing room.
+          The six plates
          —————————————————————————————————————— */}
-      {works.map((work, i) => {
-        const place = PLACEMENT[work.id];
-        return (
-          <section
-            key={work.id}
-            id={work.id}
-            className="px-6 md:px-16 py-28 md:py-40 border-t border-cream/5"
-            aria-labelledby={`${work.id}-title`}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-x-8 gap-y-10">
-              {/* the window itself */}
-              <RevealOnScroll
-                className={`${place.col} ${place.align} w-full`}
-                slow={work.size === "lg"}
-              >
-                <Window work={work} />
-              </RevealOnScroll>
+      {works.map((work, i) => (
+        <div key={work.id}>
+          <Plate
+            work={work}
+            plateNumber={i + 1}
+            marginLabel={`Plate ${work.roman} · ${KIND_LABEL[work.kind]}`}
+          />
+          {i < works.length - 1 && (
+            <div className="plate-divider">
+              <span className="rule" />
+              <span className="mono">
+                {work.roman} — {works[i + 1].roman}
+              </span>
+              <span className="rule" />
             </div>
-
-            {/* folio separator between sections, centered — like a page edge */}
-            {i < works.length - 1 && (
-              <div className="mt-28 flex items-center gap-6 justify-center opacity-60">
-                <span className="h-px w-24 bg-cream/15" />
-                <span className="folio text-cream/40">
-                  {work.roman} &nbsp;—&nbsp; {romanAfter(work.roman)}
-                </span>
-                <span className="h-px w-24 bg-cream/15" />
-              </div>
-            )}
-          </section>
-        );
-      })}
+          )}
+        </div>
+      ))}
 
       {/* ——————————————————————————————————————
-          Closing — small, grounded. Not a CTA.
+          Colophon
          —————————————————————————————————————— */}
-      <footer className="px-6 md:px-16 py-32 border-t border-cream/5">
-        <div className="max-w-[44rem]">
-          <RevealOnScroll>
-            <p className="folio text-gold/70 mb-6">End of index</p>
-            <p className="display-soft text-cream text-[clamp(1.6rem,3vw,2.4rem)] leading-snug max-w-[26ch]">
-              If any window held your eye, I'd be glad to hear about it.
+      <section className="colophon" id="colophon">
+        <RevealOnScroll className="colophon-inner">
+          <div>
+            <span
+              className="folio"
+              style={{
+                color: "rgba(255,217,147,.7)",
+                display: "block",
+                marginBottom: 20,
+              }}
+            >
+              End of index
+            </span>
+            <p className="stmt">
+              If any window held your eye, I&apos;d be glad to hear about it.
             </p>
-            <div className="mt-10 flex gap-10 font-mono text-[0.72rem] uppercase tracking-[0.28em] text-cream/60">
-              <Link href="/about" className="hover:text-gold transition-colors">
-                About →
-              </Link>
-              <Link
-                href="/contact"
-                className="hover:text-gold transition-colors"
-              >
-                Contact →
-              </Link>
-            </div>
-          </RevealOnScroll>
+          </div>
+          <dl>
+            <dt>Maker</dt>
+            <dd>MJ</dd>
+            <dt>Year</dt>
+            <dd>MMXXV</dd>
+            <dt>Set in</dt>
+            <dd>Fraunces · Instrument Sans · JetBrains Mono</dd>
+            <dt>Reach</dt>
+            <dd>
+              <Link href="mailto:mjonsson1@gmail.com">mjonsson1@gmail.com</Link>
+            </dd>
+          </dl>
+        </RevealOnScroll>
+
+        <div className="colophon-foot">
+          <span className="mono">Based nowhere in particular</span>
+          <span className="mono">End.</span>
         </div>
-      </footer>
+      </section>
     </main>
   );
-}
-
-function romanAfter(r: string): string {
-  const order = ["I", "II", "III", "IV", "V", "VI"];
-  const i = order.indexOf(r);
-  return order[i + 1] ?? "—";
 }

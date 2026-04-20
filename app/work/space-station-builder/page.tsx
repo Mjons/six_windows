@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import SpaceStationBuilderEmbed from "@/components/SpaceStationBuilderEmbed";
 import { works } from "@/content/works";
 
 const work = works.find((w) => w.id === "space-station-builder")!;
@@ -49,15 +50,7 @@ export default function Page() {
       {/* the piece — live, embedded */}
       <section className="mt-20 flex justify-center">
         <figure className="w-full max-w-[1200px]">
-          <div className="window-frame relative w-full aspect-[16/10]">
-            <iframe
-              src="/space_station_builder/index.html"
-              title="Space Station Builder — an orbital colony that grows itself"
-              className="absolute inset-0 h-full w-full border-0"
-              loading="lazy"
-              allow="fullscreen"
-            />
-          </div>
+          <SpaceStationBuilderEmbed />
           <figcaption className="mt-5 folio text-cream/45">
             Interactive · let the colony grow.
           </figcaption>
