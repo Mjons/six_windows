@@ -31,10 +31,7 @@
       }
       #stage {
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 340px; /* reserve room for the fixed #panel so canvas never hides behind it */
-        bottom: 0;
+        inset: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1773,6 +1770,10 @@
       function generate(opts) {
         const preview = !!(opts && opts.preview);
         const ps = preview ? PREVIEW_SCALE : 1.0;
+        // Canvas-size factor: 1.0 at the 2000px working size, 2.0 at 4K export.
+        // Multiply pixel-valued features by sf so they stay proportional to canvas.
+        const REF = 2000;
+        const sf = state.W / REF;
         // A full render supersedes any queued preview.
         if (!preview && rafHandle) {
           cancelAnimationFrame(rafHandle);
@@ -1801,7 +1802,7 @@
         const tiltRad = (state.tilt * Math.PI) / 180;
         // Divide noiseScale by ps so the noise pattern stays stable in display space
         // (smaller world at same noiseScale would zoom into the noise).
-        const noiseScale = ((0.0012 + turb * 0.0025) * state.freq) / ps;
+        const noiseScale = ((0.0012 + turb * 0.0025) * state.freq) / (ps * sf);
         const curlAmt = state.curl;
         const spiralAmt = state.spiral;
         const hasSpiral = spiralAmt > 0.0001;
@@ -1828,12 +1829,16 @@
         };
 
         const scaleDef = SCALES[state.scale];
-        const maxR = scaleDef.max * 0.5 * ps;
+        const maxR = scaleDef.max * 0.5 * ps * sf;
         const grid = new Grid(W, H, Math.max(10, maxR * 0.75));
-        const margin = state.mar * ps;
+        const margin = state.mar * ps * sf;
 
         // seed candidate points — lots of them, we filter by collision.
-        // Scale attempts by ps² so density-per-area matches the full render.
+        // Scale attempts by ps² so preview matches full render. Do NOT add sf
+        // here: at larger canvas, feature sizes already scale by sf (so each
+        // curve covers sf² more pixels), keeping proportional coverage constant.
+        // Adding sf² would over-densify AND shift the rng stream, desyncing
+        // palette picks between working and export resolutions.
         const attempts = Math.round(
           1400 * scaleDef.countMul * state.den * ps * ps,
         );
@@ -1849,25 +1854,30 @@
             const r = rng();
             w =
               r < 0.7
-                ? (scaleDef.min + rng() * 20) * ps
-                : (20 + rng() * (scaleDef.max - 20)) * ps;
+                ? (scaleDef.min + rng() * 20) * ps * sf
+                : (20 + rng() * (scaleDef.max - 20)) * ps * sf;
           } else {
-            w = (scaleDef.min + rng() * (scaleDef.max - scaleDef.min)) * ps;
+            w =
+              (scaleDef.min + rng() * (scaleDef.max - scaleDef.min)) * ps * sf;
           }
           const radius = w * 0.5;
-          const stepPx = scaleDef.step * state.step * ps;
+          const stepPx = scaleDef.step * state.step * ps * sf;
           const halfLen = stepPx * 0.5;
 
           // OBB seed check using the local flow tangent at (sx, sy).
+          // Buffer scales with sf so the same seeds get accepted/rejected at
+          // any canvas size — otherwise the rng stream desyncs and downstream
+          // palette picks diverge between working and export resolutions.
           const seedA = fieldAngle(sx, sy);
+          const buf = 2 * sf;
           if (
             grid.hits(
               sx,
               sy,
               Math.cos(seedA),
               Math.sin(seedA),
-              radius + 2,
-              halfLen + 2,
+              radius + buf,
+              halfLen + buf,
             )
           )
             continue;
@@ -1912,8 +1922,8 @@
         // lookups stay cheap. scaleDef.max is the biggest curve width; factor
         // in beadSize + variance headroom so the grid remains balanced.
         const maxBeadR =
-          scaleDef.max * 0.5 * ps * state.beadSize * (1 + state.beadVar);
-        const crossGap = Math.max(0, state.crossGap) * ps;
+          scaleDef.max * 0.5 * ps * sf * state.beadSize * (1 + state.beadVar);
+        const crossGap = Math.max(0, state.crossGap) * ps * sf;
         const useGrid = crossGap > 0.01;
         const beadGrid = useGrid
           ? new BeadGrid(W, H, Math.max(8, maxBeadR * 2))
