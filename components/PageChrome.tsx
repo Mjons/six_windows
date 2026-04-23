@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 const RAIL_ITEMS = [
   { id: "hero", roman: "·", label: "Index" },
   { id: "minimalistic-meows", roman: "I", label: "Meows" },
-  { id: "orrery", roman: "II", label: "Orrery" },
+  { id: "giverny-phos", roman: "II", label: "Giverny" },
   { id: "hilma-ai-klint", roman: "III", label: "Hilma" },
   { id: "filaments", roman: "IV", label: "Filaments" },
   { id: "space-station-builder", roman: "V", label: "Station" },

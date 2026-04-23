@@ -76,10 +76,10 @@ export default function Page() {
 
       <nav className="mt-32 border-t border-cream/10 pt-10 flex items-center justify-between font-mono text-[0.72rem] uppercase tracking-[0.28em]">
         <Link
-          href="/#orrery"
+          href="/#giverny-phos"
           className="text-cream/60 hover:text-gold transition-colors"
         >
-          ← II. Orrery
+          ← II. Giverny Phos
         </Link>
         <Link
           href="/#filaments"

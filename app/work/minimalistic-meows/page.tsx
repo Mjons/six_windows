@@ -110,10 +110,10 @@ export default function Page() {
           ← Index
         </Link>
         <Link
-          href="/#orrery"
+          href="/#giverny-phos"
           className="text-cream/60 hover:text-gold transition-colors"
         >
-          II. Orrery →
+          II. Giverny Phos →
         </Link>
       </nav>
     </main>

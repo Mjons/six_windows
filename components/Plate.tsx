@@ -17,9 +17,9 @@ const BANNERS: Record<
     alt: "A mosaic of minimal cat drawings, each reduced to the fewest strokes that still read as a cat.",
     unoptimized: true,
   },
-  orrery: {
-    src: "/orrery/banner.png",
-    alt: "A stylized mechanical solar system, rings and planets rendered in warm brass against deep shadow.",
+  "giverny-phos": {
+    src: "/giverny-phos/banner.png",
+    alt: "Banner for Giverny Phos.",
   },
   "hilma-ai-klint": {
     src: "/hilma/banner.avif",

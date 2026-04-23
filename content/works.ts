@@ -2,7 +2,7 @@ export type Kind = "cosmic" | "generative" | "gallery";
 
 export type PosterTreatment =
   | "meows"
-  | "orrery"
+  | "giverny-phos"
   | "hilma"
   | "filaments"
   | "space-station-builder"
@@ -46,19 +46,19 @@ export const works: Work[] = [
     maxPx: 750,
   },
   {
-    id: "orrery",
+    id: "giverny-phos",
     roman: "II",
-    title: "Orrery",
+    title: "Giverny Phos",
     medium: "cosmic simulation · WebGL",
     year: "2025",
     kind: "cosmic",
     caption: "A mechanical solar system, ticking in warm brass.",
     statement:
       "Six rings, each keeping its own time. The planets are not to scale — nothing ever is — but the gears are honest, and the light falls where it should.",
-    poster: "orrery",
+    poster: "giverny-phos",
     inset: "bleed",
     size: "lg",
-    href: "/work/orrery",
+    href: "/work/giverny-phos",
     aspect: "4362/1890",
     maxPx: 900,
   },

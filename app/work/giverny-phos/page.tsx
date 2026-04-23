@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import OrreryEmbed from "@/components/OrreryEmbed";
+import GivernyPhosEmbed from "@/components/GivernyPhosEmbed";
 import { works } from "@/content/works";
 
-const work = works.find((w) => w.id === "orrery")!;
+const work = works.find((w) => w.id === "giverny-phos")!;
 
 export default function Page() {
   return (
@@ -11,7 +11,7 @@ export default function Page() {
       {/* top rail — back to index */}
       <header className="flex items-center justify-between">
         <Link
-          href="/#orrery"
+          href="/#giverny-phos"
           className="folio text-cream/60 hover:text-gold transition-colors"
         >
           ← Index
@@ -36,8 +36,8 @@ export default function Page() {
       <section className="mt-24 flex justify-center">
         <div className="window-frame relative w-full max-w-[1200px] aspect-[600/244]">
           <Image
-            src="/orrery/banner.png"
-            alt="A luminous ring of multicolored particles encircling a dark void — a stylized event-horizon rim."
+            src="/giverny-phos/banner.png"
+            alt="Banner for Giverny Phos."
             fill
             sizes="(min-width: 1200px) 1200px, 100vw"
             className="object-cover"
@@ -46,12 +46,12 @@ export default function Page() {
         </div>
       </section>
 
-      {/* the piece — live mechanical solar system, iframed from its GitHub Pages host */}
+      {/* the piece — live, iframed from its GitHub Pages host */}
       <section className="mt-20 flex justify-center">
         <figure className="w-full max-w-[1200px]">
-          <OrreryEmbed />
+          <GivernyPhosEmbed />
           <figcaption className="mt-5 folio text-cream/45">
-            Interactive · let the gears turn.
+            Interactive.
           </figcaption>
         </figure>
       </section>
