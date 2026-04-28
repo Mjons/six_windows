@@ -58,13 +58,13 @@ export default function Page() {
       <section className="mt-20 flex justify-center">
         <figure className="w-full max-w-[1100px]">
           <div className="window-frame relative w-full aspect-video">
-            <video
-              className="absolute inset-0 h-full w-full object-cover"
-              src="/meows/meows.mp4"
-              poster="/meows/banner.jpg"
-              controls
-              playsInline
-              preload="metadata"
+            <iframe
+              className="absolute inset-0 h-full w-full border-0"
+              src="https://www.youtube-nocookie.com/embed/KfleOQrkMGU?rel=0&modestbranding=1"
+              title="Minimalistic Meows — the mosaic in motion"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             />
           </div>
           <figcaption className="mt-5 folio text-cream/45">
